@@ -32,8 +32,25 @@ import akka.dispatch.Future
 import akka.dispatch.Futures
 import akka.dispatch.AlreadyCompletedFuture
 
+
+
+trait SpecialBalLookup extends  Function1[Acct,Future[Bal]]
+trait BalLookup extends   Function1[Acct,Future[Bal]]
+
+object SpecialLineBalance {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special:SpecialBalLookup): Future[Bal] = {
+    acctLook(pn) flatMap { special(_) }
+  }
+}
+
+object OtherLineBalance {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: BalLookup): Future[Bal] = {
+    acctLook(pn) flatMap { balLook(_) }
+  }
+}
+
 object SingleLineBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook:  Lookup[Acct, Bal]): Future[Bal] = {
     acctLook(pn) flatMap { balLook(_) }
   }
 }

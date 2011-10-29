@@ -8,8 +8,19 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   sequential
 
   implicit val acctLook: Lookup[Num, Acct] = Service(ValueMaps.acctMap)
-  implicit val balLook: Lookup[Acct, Bal] = Service(ValueMaps.balMap)
+  implicit val balLook: BalLookup = BalService
+  implicit val stdBalLook: Lookup[Acct, Bal] = StdBalService
+  implicit val special = SpecialService
   implicit val numLook = Service(ValueMaps.numMap)
+
+  "special" in {
+    SpecialLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(1000F))
+  }
+
+  "other" in {
+    OtherLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(13F))
+
+  }
 
   "slb" in {
     SingleLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
@@ -28,8 +39,6 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     IfNumBalance.apply(Num("999-555-1234")).get must beEqualTo(Bal(0F))
     IfNumBalance.apply(null).get must beEqualTo(Bal(0F))
   }
-  
-  
 
   "bbm" in {
     BalanceByMap.apply(Id(123)).get must beEqualTo(Bal(125.5F))
@@ -43,10 +52,17 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     BalancesByMap.apply(Id(123)).get must beEqualTo(List(Bal(124.5F), Bal(1.0F)))
   }
 
-  case class Service[K, V](values: Map[K, V]) extends Lookup[K, V] {
-    def apply(arg: K): Future[V] = Future(values(arg))
-//       def apply(arg: K): Future[V] = new AlreadyCompletedFuture(new Right((values(arg))))
+  case class Service[K, V](values: Map[K, V]) extends MapService(values) with Lookup[K, V]
 
+  abstract class MapService[K, V](map: Map[K, V]) {
+    self: Function1[K, Future[V]] =>
+    def apply(a: K) = Future(map(a))
   }
+
+  case object StdBalService extends MapService(ValueMaps.balMap) with Lookup[Acct, Bal]
+
+  case object BalService extends MapService(Map(Acct("alpha") -> Bal(13F))) with BalLookup
+
+  case object SpecialService extends MapService(Map(Acct("alpha") -> Bal(1000F))) with SpecialBalLookup
 
 }

@@ -71,7 +71,7 @@ case class Flow[A, R](name: String, flow: A => Future[R]) {
     def endpointUri = "seda:" + name
 
     def receive = {
-      case akka.camel.Message(a: A, _) => self.reply(flow(a))
+      case akka.camel.Message(a: A, _) => self.reply(Future(a).flatMap(flow))
     }
   }
 
