@@ -25,7 +25,9 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "slb" in {
     SingleLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
     SingleLineBalance.apply(Num("124-555-1234")).await.result must beEqualTo(Some(Bal(124.5F)))
-    SingleLineBalance.apply(Num("xxx")).await.result must beEqualTo(None)
+    val noResult = SingleLineBalance.apply(Num("xxx")).await
+    noResult.result must beEqualTo(None)
+    noResult.exception.get.getMessage() must beEqualTo("key not found: Num(xxx)")
   }
 
   "rnb" in {

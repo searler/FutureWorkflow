@@ -1,23 +1,22 @@
 package cognitiveentity.workflow
 
- case class ActorService[K, V](values: Map[K, V]) extends Lookup[K, V] {
-    import akka.actor.Actor
-    import akka.dispatch.Future
-    
-    val act = Actor.actorOf(new SActor).start
+case class ActorService[K, V](values: Map[K, V]) extends Lookup[K, V] {
+  import akka.actor.Actor
+  import akka.dispatch.Future
 
-    def apply(arg: K): Future[V] = (act ? arg).map { _.asInstanceOf[V]}
+  val act = Actor.actorOf(new SActor).start
 
-    private class SActor extends Actor {
-      def receive = {
-        case a => self.reply(values(a.asInstanceOf[K]))
-      }
+  def apply(arg: K): Future[V] = (act ? arg).map { _.asInstanceOf[V] }
+
+  private class SActor extends Actor {
+    def receive = {
+      case a => self.reply(values(a.asInstanceOf[K]))
     }
-
   }
 
+}
 
-object AkkaFlowsTest  extends org.specs2.mutable.SpecificationWithJUnit {
+object AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   implicit val acctLook: Lookup[Num, Acct] = ActorService(ValueMaps.acctMap)
   implicit val balLook: Lookup[Acct, Bal] = ActorService(ValueMaps.balMap)
@@ -26,7 +25,9 @@ object AkkaFlowsTest  extends org.specs2.mutable.SpecificationWithJUnit {
   "slb" in {
     SingleLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
     SingleLineBalance.apply(Num("124-555-1234")).await.result must beEqualTo(Some(Bal(124.5F)))
-    SingleLineBalance.apply(Num("xxx")).await.result must beEqualTo(None)
+    val noResult = SingleLineBalance.apply(Num("xxx")).await
+    noResult.result must beEqualTo(None)
+    noResult.exception.get.getMessage() must beEqualTo("key not found: Num(xxx)")
   }
 
   "rnb" in {
@@ -53,5 +54,4 @@ object AkkaFlowsTest  extends org.specs2.mutable.SpecificationWithJUnit {
     BalancesByMap.apply(Id(123)).get must beEqualTo(List(Bal(124.5F), Bal(1.0F)))
   }
 
-  
 }
