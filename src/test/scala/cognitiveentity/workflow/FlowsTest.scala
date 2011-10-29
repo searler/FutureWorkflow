@@ -21,6 +21,14 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     OtherLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(13F))
 
   }
+  
+   "split" in {
+    SplitLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
+    SplitLineBalance.apply(Num("124-555-1234")).await.result must beEqualTo(Some(Bal(1124.5F)))
+    val noResult = SplitLineBalance.apply(Num("xxx")).await
+    noResult.result must beEqualTo(None)
+    noResult.exception.get.getMessage() must beEqualTo("key not found: Num(xxx)")
+  }
 
   "slb" in {
     SingleLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))

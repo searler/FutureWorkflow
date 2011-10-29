@@ -32,13 +32,11 @@ import akka.dispatch.Future
 import akka.dispatch.Futures
 import akka.dispatch.AlreadyCompletedFuture
 
-
-
-trait SpecialBalLookup extends  Function1[Acct,Future[Bal]]
-trait BalLookup extends   Function1[Acct,Future[Bal]]
+trait SpecialBalLookup extends Function1[Acct, Future[Bal]]
+trait BalLookup extends Function1[Acct, Future[Bal]]
 
 object SpecialLineBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special:SpecialBalLookup): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
     acctLook(pn) flatMap { special(_) }
   }
 }
@@ -50,8 +48,19 @@ object OtherLineBalance {
 }
 
 object SingleLineBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook:  Lookup[Acct, Bal]): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
     acctLook(pn) flatMap { balLook(_) }
+  }
+}
+
+object SplitLineBalance {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+    val std = acctLook(pn) flatMap { balLook(_) }
+    val spec = acctLook(pn) flatMap { special(_) }
+    for {
+      val b1 <- std
+      val b2 <- spec
+    } yield b1 + b2
   }
 }
 
@@ -69,8 +78,6 @@ object IfNumBalance {
       acctLook(pn) flatMap { a => if (a == null) new AlreadyCompletedFuture(new Right(Bal(55F))) else balLook(a) }
   }
 }
-
-
 
 object Phones {
   def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]]): Future[List[Num]] = numLook(id)
@@ -105,6 +112,6 @@ object BalancesByFor {
 object BalanceByMap {
   def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] =
     BalancesByFor(id) map { _.reduce(_ + _) }
- 
+
 }
 
