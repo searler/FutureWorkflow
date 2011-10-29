@@ -66,7 +66,7 @@ object IfNumBalance {
     if (pn == null)
       new AlreadyCompletedFuture(new Right(Bal(0F)))
     else
-      acctLook(pn) flatMap { a => if (a == null) new AlreadyCompletedFuture(new Right(Bal(0F))) else balLook(a) }
+      acctLook(pn) flatMap { a => if (a == null) new AlreadyCompletedFuture(new Right(Bal(55F))) else balLook(a) }
   }
 }
 

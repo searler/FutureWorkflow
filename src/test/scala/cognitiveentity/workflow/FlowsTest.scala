@@ -38,7 +38,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "fnbIf" in {
     IfNumBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
-    IfNumBalance.apply(Num("999-555-1234")).get must beEqualTo(Bal(0F))
+    IfNumBalance.apply(Num("999-555-1234")).get must beEqualTo(Bal(55F))
     IfNumBalance.apply(null).get must beEqualTo(Bal(0F))
   }
 
