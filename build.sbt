@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
    "se.scalablesolutions.akka" % "akka-actor" % "1.2"
    ,"se.scalablesolutions.akka" % "akka-camel" % "1.2"
    ,"se.scalablesolutions.akka" % "akka-remote" % "1.2"
-   ,"org.apache.camel" % "camel-scala" % "2.6.0"
+   ,"org.apache.camel" % "camel-scala" % "2.8.2"
  )
 
 resolvers ++= Seq("Akka Repository" at "http://akka.io/repository")
