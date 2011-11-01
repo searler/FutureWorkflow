@@ -61,7 +61,7 @@ case class CamelService[K, V](name: String) extends Lookup[K, V] {
 
 }
 
-case class Flow[A, R](name: String, flow: A => Future[R]) {
+case class RRFlow[A, R](name: String, flow: A => Future[R]) {
   import akka.actor.Actor
   import akka.dispatch.Future
 
@@ -77,9 +77,62 @@ case class Flow[A, R](name: String, flow: A => Future[R]) {
 
 }
 
+case class OWFlow[A, R](in: String, out: String, flow: A => Future[R]) {
+  import akka.actor.Actor
+  import akka.dispatch.Future
+
+  val inActor = Actor.actorOf(new InActor).start
+  val outActor = Actor.actorOf(new OutActor).start
+
+  private class OutActor extends Actor with Producer with Oneway {
+    val endpointUri = "seda:" + out
+  }
+
+  private class InActor extends Actor with Consumer {
+    val endpointUri = "seda:" + in
+
+    def receive = {
+      case akka.camel.Message(a: A, _) => (Future(a).flatMap(flow)).map(outActor ! _)
+    }
+  }
+
+}
+
+/**
+ * Mechanism to asynchronously capture the results of a one-way
+ * interaction.
+ */
+private object Gather {
+  import java.util.concurrent._
+  import java.util.concurrent.atomic._
+  import scala.collection.mutable._
+  val awaiter = new AtomicReference[CountDownLatch]
+  val values = new ListBuffer[Any]
+
+  //Reset the state and indicate the number of expected results
+  def prep(expected: Int) {
+    synchronized {
+      values.clear
+      awaiter.set(new CountDownLatch(expected))
+    }
+  }
+  //wait for expected number of results to be received
+  def await { awaiter.get.await(2, java.util.concurrent.TimeUnit.SECONDS) }
+
+  //record the result
+  def apply[A](arg: A) {
+    synchronized {
+      values += arg
+      awaiter.get.countDown
+    }
+  }
+
+  def get = synchronized { values toList }
+}
+
 object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
 
-  //  sequential
+  sequential
 
   implicit val acctLook: Lookup[Num, Acct] = CamelService("acct")
   implicit val balLook: Lookup[Acct, Bal] = CamelService("bal")
@@ -95,18 +148,35 @@ object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
     context.addRoutes(new RouteBuilder { "seda:acct".bean(Responder(ValueMaps.acctMap)) })
     context.addRoutes(new RouteBuilder { "seda:bal".bean(Responder(ValueMaps.balMap)) })
     context.addRoutes(new RouteBuilder { "seda:pp".bean(Responder(ValueMaps.prepaidMap)) })
-    // flows
-    val slb = new Flow("slb", SingleLineBalance.apply)
-    val bbm = new Flow("bbm", BalanceByMap.apply)
+    //wire end point for result of f-a-f call 
+    context.addRoutes(new RouteBuilder { "seda:gather".bean(Gather) })
+    // R-R flows
+    val slb = new RRFlow("slb", SingleLineBalance.apply)
+    val bbm = new RRFlow("bbm", BalanceByMap.apply)
+    //oneway flows
+    val slbOW = new OWFlow("slbIn", "gather", SingleLineBalance.apply)
 
     startCamelService
 
     success
   }
 
+  "check slb one way using camel many" in {
+    val producer = CamelContextManager.mandatoryContext.createProducerTemplate
+    val cnt = 14
+    Gather.prep(cnt)
+    for (i <- 1 to cnt)
+      producer.sendBody("seda:slbIn", Num("124-555-1234"))
+
+    val consumer = CamelContextManager.mandatoryContext.createConsumerTemplate
+    Gather.await
+    Gather.values must beEqualTo(List.make(cnt, Bal(124.5F)))
+
+  }
+
   "check slb request using camel" in {
     val template = CamelContextManager.mandatoryContext.createProducerTemplate
-    val fs = for (i <- 0 to 4) yield (template.requestBody("seda:slb", Num("124-555-1234"))).asInstanceOf[Future[Bal]]
+    val fs = for (i <- 0 to 14) yield (template.requestBody("seda:slb", Num("124-555-1234"))).asInstanceOf[Future[Bal]]
 
     fs.map(f => f.get must beEqualTo(Bal(124.5F)))
 
@@ -145,7 +215,6 @@ object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
    */
   step {
     stopCamelService
-    Actor.registry.shutdownAll
     success
   }
 
