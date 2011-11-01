@@ -4,7 +4,6 @@ version := "0.1"
 
 scalaVersion := "2.9.1"
 
-//sourceDirectory := file("/home/richard/work/FutureWorkflow/sbt/src")
 
 //Specs2
 libraryDependencies ++= Seq(
