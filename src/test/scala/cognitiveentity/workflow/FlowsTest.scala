@@ -24,6 +24,10 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "other" in {
     OtherLineBalance(Num("124-555-1234")).get must beEqualTo(Bal(13F))
+  }
+  
+  "noop" in {
+    NoOp(Num("124-555-1234")).get must beEqualTo(Num("124-555-1234"))
 
   }
   

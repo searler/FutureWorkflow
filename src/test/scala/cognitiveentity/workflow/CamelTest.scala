@@ -88,11 +88,11 @@ case class OWFlow[A, R](in: String, out: String, flow: A => Future[R]) {
     val endpointUri = "seda:" + out
   }
 
-  private class InActor extends Actor with Consumer   {
+  private class InActor extends Actor with Consumer {
     val endpointUri = "seda:" + in
 
     def receive = {
-      case akka.camel.Message(a: A, _) => (Future(a).flatMap(flow)).onComplete{outActor ! _}
+      case akka.camel.Message(a: A, _) => (Future(a).flatMap(flow)).onComplete { outActor ! _ }
     }
   }
 
@@ -117,7 +117,7 @@ private object Gather {
     }
   }
   //wait for expected number of results to be received
-  def await { awaiter.get.await(2, java.util.concurrent.TimeUnit.SECONDS) }
+  def await { awaiter.get.await(200, java.util.concurrent.TimeUnit.SECONDS) }
 
   //record the result
   def apply[A](arg: A) {
@@ -155,20 +155,43 @@ object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
     val bbm = new RRFlow("bbm", BalanceByMap.apply)
     //oneway flows
     val slbOW = new OWFlow("slbIn", "gather", SingleLineBalance.apply)
+    val noop = new OWFlow("noop", "gather", NoOp.apply)
 
     startCamelService
 
     success
   }
 
+  "seda" in {
+    val producer = CamelContextManager.mandatoryContext.createProducerTemplate
+    val cnt = 16
+ 
+    for (i <- 1 to cnt)
+      producer.requestBody("seda:acct", Num("124-555-1234"))
+
+    success
+  }
+  
+  
+  "Noop" in {
+    val producer = CamelContextManager.mandatoryContext.createProducerTemplate
+    val cnt = 16
+    Gather.prep(cnt)
+    for (i <- 1 to cnt)
+      producer.sendBody("seda:noop", Num("124-555-1234"))
+
+    Gather.await
+    Gather.values.size must beEqualTo(cnt)
+
+  }
+
   "check slb one way using camel many" in {
     val producer = CamelContextManager.mandatoryContext.createProducerTemplate
-    val cnt = 16600
+    val cnt = 32
     Gather.prep(cnt)
     for (i <- 1 to cnt)
       producer.sendBody("seda:slbIn", Num("124-555-1234"))
 
-    val consumer = CamelContextManager.mandatoryContext.createConsumerTemplate
     Gather.await
     Gather.values.size must beEqualTo(cnt)
 
