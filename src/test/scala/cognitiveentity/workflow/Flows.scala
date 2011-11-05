@@ -35,6 +35,10 @@ import akka.dispatch.AlreadyCompletedFuture
 trait SpecialBalLookup extends Function1[Acct, Future[Bal]]
 trait BalLookup extends Function1[Acct, Future[Bal]]
 
+object NoOp{
+  def apply(pn:Num) = Future(pn)
+}
+
 object SpecialLineBalance {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
     acctLook(pn) flatMap { special(_) }
