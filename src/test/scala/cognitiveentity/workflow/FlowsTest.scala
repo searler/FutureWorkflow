@@ -12,7 +12,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   implicit val stdBalLook: Lookup[Acct, Bal] = StdBalService
   implicit val special = SpecialService
   implicit val numLook = Service(ValueMaps.numMap)
-  
+
   "phones" in {
     Phones(Id(123)).get must beEqualTo(List(Num("124-555-1234"), Num("333-555-1234")))
     Phones(Id(-1)).await.exception.get.getMessage() must beEqualTo("key not found: Id(-1)")
@@ -25,13 +25,17 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "other" in {
     OtherLineBalance(Num("124-555-1234")).get must beEqualTo(Bal(13F))
   }
-  
+
   "noop" in {
     NoOp(Num("124-555-1234")).get must beEqualTo(Num("124-555-1234"))
-
   }
-  
-   "split" in {
+
+  "splitFiltered" in {
+    SplitLineBalanceFiltered(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
+    SplitLineBalanceFiltered(Num("333-555-1234")).result must beEqualTo(None)
+  }
+
+  "split" in {
     SplitLineBalance(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
     SplitLineBalance(Num("124-555-1234")).await.result must beEqualTo(Some(Bal(1124.5F)))
     val noResult = SplitLineBalance(Num("xxx")).await
@@ -82,6 +86,6 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   case object BalService extends MapService(Map(Acct("alpha") -> Bal(13F))) with BalLookup
 
-  case object SpecialService extends MapService(Map(Acct("alpha") -> Bal(1000F))) with SpecialBalLookup
+  case object SpecialService extends MapService(Map(Acct("alpha") -> Bal(1000F), Acct("beta") -> Bal(1234F))) with SpecialBalLookup
 
 }

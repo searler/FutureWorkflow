@@ -39,6 +39,8 @@ object NoOp{
   def apply(pn:Num) = Future(pn)
 }
 
+
+
 object SpecialLineBalance {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
     acctLook(pn) flatMap { special(_) }
@@ -56,6 +58,18 @@ object SingleLineBalance {
     acctLook(pn) flatMap { balLook(_) }
   }
 }
+
+object SplitLineBalanceFiltered {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Any] = {
+    val std = acctLook(pn) flatMap { balLook(_) }
+    val spec = acctLook(pn) flatMap { special(_) }
+    for {
+       b1 <- std  if b1 == Bal(124.5F)
+       b2 <- spec 
+    } yield b1 
+  }
+}
+
 
 object SplitLineBalance {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
@@ -82,6 +96,8 @@ object IfNumBalance {
       acctLook(pn) flatMap { a => if (a == null) new AlreadyCompletedFuture(new Right(Bal(55F))) else balLook(a) }
   }
 }
+
+
 
 object Phones {
   def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]]): Future[List[Num]] = numLook(id)
