@@ -20,34 +20,25 @@
  */
 package cognitiveentity.workflow
 
-case class Id(i:Int)
+/**
+ * customer identifier
+ */
+case class Id(i: Int)
 
 /**
  * A phone number
  */
-case class Num(s:String)
+case class Num(s: String)
 
 /**
  * An account number
  */
-case class Acct(s:String)
-
-/**
- * Common trait for Bal and PP to
- * demonstrate polymorphism
- */
-trait BalanceLike{
- def v:Float
-}
+case class Acct(s: String)
 
 /**
  * An Account balance
  */
-case class Bal(v:Float) extends BalanceLike{
-    def +(o:Bal) = Bal(v+o.v)
+case class Bal(v: Float) {
+  def +(o: Bal) = Bal(v + o.v)
 }
 
-/**
- * A Prepaid balance
- */
-case class PP(v:Float) extends BalanceLike

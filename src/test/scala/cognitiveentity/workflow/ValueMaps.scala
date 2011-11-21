@@ -18,23 +18,23 @@
  */
 package cognitiveentity.workflow
 
+object ValueMaps {
 
+  /**
+   * Standard values for test purposes
+   *
+   * Id->Num
+   * Num->Acct
+   * Acct->Bal
+   *
+   */
+  val numMap = Map(Id(123) -> List(Num("124-555-1234"), Num("333-555-1234")))
+  val acctMap = Map(Num("124-555-1234") -> Acct("alpha"),
+    Num("333-555-1234") -> Acct("beta"),
+    Num("999-555-1234") -> null,
+    Num("111-555-1234") -> Acct("zulu"))
+  val balMap = Map(Acct("alpha") -> Bal(124.5F),
+    Acct("beta") -> Bal(1.0F),
+    Acct("gamma") -> Bal(11.0F))
 
-object ValueMaps{
-
-/**
- * Standard values for test purposes
- */
-val numMap = Map(Id(123)->List(Num("124-555-1234"),Num("333-555-1234"))) //external id->Num(s)
-val acctMap = Map(Num("124-555-1234") -> Acct("alpha"),
-                  Num("333-555-1234") -> Acct("beta"),
-                   Num("999-555-1234") -> null,
-                  Num("111-555-1234") -> Acct("zulu"))
-val balMap = Map(Acct("alpha") -> Bal(124.5F),
-                 Acct("beta") -> Bal(1.0F),
-                 Acct("gamma") -> Bal(11.0F))
-val prepaidMap = Map(Acct("alpha") -> PP(124.5F))
-
-
-  
 }

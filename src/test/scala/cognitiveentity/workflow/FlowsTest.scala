@@ -1,3 +1,22 @@
+
+/* Copyright (c) 2010 Richard Searle
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @author Richard Searle
+ */
 package cognitiveentity.workflow
 
 import org.specs2.mutable._
@@ -5,13 +24,11 @@ import akka.dispatch.Future
 
 object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
-  sequential
-
-  implicit val acctLook: Lookup[Num, Acct] = Service(ValueMaps.acctMap)
-  implicit val balLook: BalLookup = BalService
-  implicit val stdBalLook: Lookup[Acct, Bal] = StdBalService
-  implicit val special = SpecialService
-  implicit val numLook = Service(ValueMaps.numMap)
+ private  implicit val acctLook: Lookup[Num, Acct] = Service(ValueMaps.acctMap)
+ private  implicit val balLook: BalLookup = BalService
+ private  implicit val stdBalLook: Lookup[Acct, Bal] = StdBalService
+ private  implicit val special = SpecialService
+ private  implicit val numLook = Service(ValueMaps.numMap)
 
   "phones" in {
     Phones(Id(123)).get must beEqualTo(List(Num("124-555-1234"), Num("333-555-1234")))
@@ -28,6 +45,10 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "noop" in {
     NoOp(Num("124-555-1234")).get must beEqualTo(Num("124-555-1234"))
+  }
+
+  "noop optimized" in {
+    NoOpOptimized(Num("124-555-1234")).get must beEqualTo(Num("124-555-1234"))
   }
 
   "splitFiltered" in {
@@ -75,17 +96,18 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     BalancesByMap(Id(123)).get must beEqualTo(List(Bal(124.5F), Bal(1.0F)))
   }
 
-  case class Service[K, V](values: Map[K, V]) extends MapService(values) with Lookup[K, V]
-
-  abstract class MapService[K, V](map: Map[K, V]) {
+  private abstract class MapService[K, V](map: Map[K, V]) {
     self: Function1[K, Future[V]] =>
     def apply(a: K) = Future(map(a))
   }
 
-  case object StdBalService extends MapService(ValueMaps.balMap) with Lookup[Acct, Bal]
+  private  case class Service[K, V](values: Map[K, V]) extends MapService(values) with Lookup[K, V]
 
-  case object BalService extends MapService(Map(Acct("alpha") -> Bal(13F))) with BalLookup
+  private  case object StdBalService extends MapService(ValueMaps.balMap) with Lookup[Acct, Bal]
 
-  case object SpecialService extends MapService(Map(Acct("alpha") -> Bal(1000F), Acct("beta") -> Bal(1234F))) with SpecialBalLookup
+  private  case object BalService extends MapService(Map(Acct("alpha") -> Bal(13F))) with BalLookup
+
+  private  case object SpecialService extends MapService(Map(Acct("alpha") -> Bal(1000F),
+    Acct("beta") -> Bal(1234F))) with SpecialBalLookup
 
 }

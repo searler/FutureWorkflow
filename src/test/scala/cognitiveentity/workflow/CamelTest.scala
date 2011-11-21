@@ -147,7 +147,6 @@ object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
     context.addRoutes(new RouteBuilder { "seda:num".bean(Responder(ValueMaps.numMap)) })
     context.addRoutes(new RouteBuilder { "seda:acct".bean(Responder(ValueMaps.acctMap)) })
     context.addRoutes(new RouteBuilder { "seda:bal".bean(Responder(ValueMaps.balMap)) })
-    context.addRoutes(new RouteBuilder { "seda:pp".bean(Responder(ValueMaps.prepaidMap)) })
     //wire end point for result of f-a-f call 
     context.addRoutes(new RouteBuilder { "seda:gather".bean(Gather) })
     // R-R flows
@@ -165,14 +164,13 @@ object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
   "seda" in {
     val producer = CamelContextManager.mandatoryContext.createProducerTemplate
     val cnt = 16
- 
+
     for (i <- 1 to cnt)
-      producer.requestBody("seda:acct", Num("124-555-1234"))
+      producer.requestBody("seda:acct", Num("124-555-1234")) must beEqualTo(Acct("alpha"))
 
     success
   }
-  
-  
+
   "Noop" in {
     val producer = CamelContextManager.mandatoryContext.createProducerTemplate
     val cnt = 16
@@ -187,7 +185,7 @@ object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "check slb one way using camel many" in {
     val producer = CamelContextManager.mandatoryContext.createProducerTemplate
-    val cnt = 32
+    val cnt = 62
     Gather.prep(cnt)
     for (i <- 1 to cnt)
       producer.sendBody("seda:slbIn", Num("124-555-1234"))
