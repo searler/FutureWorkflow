@@ -13,7 +13,6 @@ Defines case classes for the problem domain
 ## ValueMaps.scala
 Defines test data
 
-
 ## Flow.scala
 Provides a common trait to define the interaction of a Flow with the environment.ZZ
 
