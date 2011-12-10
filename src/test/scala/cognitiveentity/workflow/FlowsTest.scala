@@ -19,9 +19,15 @@
  */
 package cognitiveentity.workflow
 
+
+
 import org.specs2.mutable._
 import akka.dispatch.Future
 
+  import org.junit.runner.RunWith
+  import org.specs2.runner.JUnitRunner
+
+  @RunWith(classOf[JUnitRunner])
 object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
  private  implicit val acctLook: Lookup[Num, Acct] = Service(ValueMaps.acctMap)

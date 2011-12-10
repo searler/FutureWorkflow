@@ -25,6 +25,9 @@
  */
 package cognitiveentity.workflow
 
+import org.junit.runner.RunWith
+  import org.specs2.runner.JUnitRunner
+
 import _root_.akka.actor.Actor
 import _root_.akka.dispatch.Future
 import _root_.akka.camel._
@@ -130,6 +133,7 @@ private object Gather {
   def get = synchronized { values toList }
 }
 
+@RunWith(classOf[JUnitRunner]) 
 object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   sequential

@@ -18,6 +18,8 @@
  */
 package cognitiveentity.workflow
 import akka.dispatch.Future
+ import org.junit.runner.RunWith
+  import org.specs2.runner.JUnitRunner
 
 case class ActorService[K, V](values: Map[K, V]) extends Lookup[K, V] {
   import akka.actor.Actor
@@ -35,6 +37,8 @@ case class ActorService[K, V](values: Map[K, V]) extends Lookup[K, V] {
 
 }
 
+
+ @RunWith(classOf[JUnitRunner])
 object AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   implicit val acctLook: Lookup[Num, Acct] = ActorService(ValueMaps.acctMap)
