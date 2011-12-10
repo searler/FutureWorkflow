@@ -30,16 +30,20 @@
 package cognitiveentity.workflow
 import akka.dispatch.Future
 import akka.dispatch.Futures
-import akka.dispatch.AlreadyCompletedFuture
+
 
 trait SpecialBalLookup extends Function1[Acct, Future[Bal]]
 trait BalLookup extends Function1[Acct, Future[Bal]]
+
+object Ret{
+  def apply[T](v:T)= new akka.dispatch.AlreadyCompletedFuture(new Right(v))
+}
 
 /**
  * A no-op flow that simply returns the Num, expensively
  */
 object NoOp {
-  def apply(pn: Num) =  new AlreadyCompletedFuture(new Right(pn))
+  def apply(pn: Num) =  Ret(pn)
 }
 
 /**
@@ -98,9 +102,9 @@ object RecoverNumBalance {
 object IfNumBalance {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
     if (pn == null)
-      new AlreadyCompletedFuture(new Right(Bal(0F)))
+      Ret(Bal(0F))
     else
-      acctLook(pn) flatMap { a => if (a == null) new AlreadyCompletedFuture(new Right(Bal(55F))) else balLook(a) }
+      acctLook(pn) flatMap { a => if (a == null) Ret(Bal(55F)) else balLook(a) }
   }
 }
 
