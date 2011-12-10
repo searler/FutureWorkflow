@@ -43,14 +43,14 @@ object Ret{
  * A no-op flow that simply returns the Num, expensively
  */
 object NoOp {
-  def apply(pn: Num) =  Ret(pn)
+  def apply(pn: Num) =  Future(pn)
 }
 
 /**
  * A no-op flow that simply returns the  Num
  */
 object NoOpOptimized {
-  def apply(pn: Num) = Future(pn)
+  def apply(pn: Num) = Ret(pn)
 }
 
 object SpecialLineBalance {
