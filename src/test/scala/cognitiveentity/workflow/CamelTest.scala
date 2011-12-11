@@ -161,8 +161,6 @@ object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
     val noop = new OWFlow("noop", "gather", NoOp.apply)
 
     startCamelService
-
-    success
   }
 
   "seda" in {
@@ -240,7 +238,6 @@ object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
    */
   step {
     stopCamelService
-    success
   }
 
 }
