@@ -19,22 +19,20 @@
  */
 package cognitiveentity.workflow
 
-
-
 import org.specs2.mutable._
 import akka.dispatch.Future
 
-  import org.junit.runner.RunWith
-  import org.specs2.runner.JUnitRunner
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
-  @RunWith(classOf[JUnitRunner])
+@RunWith(classOf[JUnitRunner])
 object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
- private  implicit val acctLook: Lookup[Num, Acct] = Service(ValueMaps.acctMap)
- private  implicit val balLook: BalLookup = BalService
- private  implicit val stdBalLook: Lookup[Acct, Bal] = StdBalService
- private  implicit val special = SpecialService
- private  implicit val numLook = Service(ValueMaps.numMap)
+  private implicit val acctLook: Lookup[Num, Acct] = Service(ValueMaps.acctMap)
+  private implicit val balLook: BalLookup = BalService
+  private implicit val stdBalLook: Lookup[Acct, Bal] = StdBalService
+  private implicit val special = SpecialService
+  private implicit val numLook = Service(ValueMaps.numMap)
 
   "phones" in {
     Phones(Id(123)).get must beEqualTo(List(Num("124-555-1234"), Num("333-555-1234")))
@@ -60,6 +58,19 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "splitFiltered" in {
     SplitLineBalanceFiltered(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
     SplitLineBalanceFiltered(Num("333-555-1234")).result must beEqualTo(None)
+  }
+
+  "split first" in {
+    val result = SplitLineBalanceFirst(Num("124-555-1234")).get
+    List(Bal(124.5F), Bal(1000F)).contains(result) must beTrue
+  }
+
+  "split common" in {
+    SplitLineBalanceCommon(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
+  }
+
+  "split common map" in {
+    SplitLineBalanceCommonMap(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
   }
 
   "split" in {
@@ -107,13 +118,13 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     def apply(a: K) = Future(map(a))
   }
 
-  private  case class Service[K, V](values: Map[K, V]) extends MapService(values) with Lookup[K, V]
+  private case class Service[K, V](values: Map[K, V]) extends MapService(values) with Lookup[K, V]
 
-  private  case object StdBalService extends MapService(ValueMaps.balMap) with Lookup[Acct, Bal]
+  private case object StdBalService extends MapService(ValueMaps.balMap) with Lookup[Acct, Bal]
 
-  private  case object BalService extends MapService(Map(Acct("alpha") -> Bal(13F))) with BalLookup
+  private case object BalService extends MapService(Map(Acct("alpha") -> Bal(13F))) with BalLookup
 
-  private  case object SpecialService extends MapService(Map(Acct("alpha") -> Bal(1000F),
+  private case object SpecialService extends MapService(Map(Acct("alpha") -> Bal(1000F),
     Acct("beta") -> Bal(1234F))) with SpecialBalLookup
 
 }

@@ -31,19 +31,21 @@ package cognitiveentity.workflow
 import akka.dispatch.Future
 import akka.dispatch.Futures
 
-
 trait SpecialBalLookup extends Function1[Acct, Future[Bal]]
 trait BalLookup extends Function1[Acct, Future[Bal]]
 
-object Ret{
-  def apply[T](v:T)= new akka.dispatch.AlreadyCompletedFuture(new Right(v))
+/**
+ * Optimized return of a known value
+ */
+object Ret {
+  def apply[T](v: T): Future[T] = new akka.dispatch.AlreadyCompletedFuture(new Right(v))
 }
 
 /**
  * A no-op flow that simply returns the Num, expensively
  */
 object NoOp {
-  def apply(pn: Num) =  Future(pn)
+  def apply(pn: Num) = Future(pn)
 }
 
 /**
@@ -53,6 +55,9 @@ object NoOpOptimized {
   def apply(pn: Num) = Ret(pn)
 }
 
+/**
+ *
+ */
 object SpecialLineBalance {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
     acctLook(pn) flatMap { special(_) }
@@ -79,6 +84,35 @@ object SplitLineBalanceFiltered {
       b1 <- std if b1 == Bal(124.5F)
       b2 <- spec
     } yield b1
+  }
+}
+
+object SplitLineBalanceFirst {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+    val std = acctLook(pn) flatMap { balLook(_) }
+    val spec = acctLook(pn) flatMap { special(_) }
+    Futures.firstCompletedOf(List(std, spec))
+  }
+}
+
+object SplitLineBalanceCommon {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+    val acct = acctLook(pn)
+    val std = acct flatMap { balLook(_) }
+    val spec = acct flatMap { special(_) }
+    for {
+      val b1 <- std
+      val b2 <- spec
+    } yield b1 + b2
+  }
+}
+
+object SplitLineBalanceCommonMap {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+    val acct = acctLook(pn)
+    val std = acct flatMap { balLook(_) }
+    val spec = acct flatMap { special(_) }
+    std flatMap { v => spec map { u => v + u } }
   }
 }
 
@@ -141,6 +175,5 @@ object BalancesByFor {
 object BalanceByMap {
   def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] =
     BalancesByFor(id) map { _.reduce(_ + _) }
-
 }
 
