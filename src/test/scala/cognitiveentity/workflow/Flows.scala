@@ -101,6 +101,18 @@ object SplitLineBalanceFirst {
   }
 }
 
+object SplitLineBalanceSerial {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+    acctLook(pn) flatMap { acct =>
+      balLook(acct) flatMap { b =>
+        special(acct) map {
+          _ + b
+        }
+      }
+    }
+  }
+}
+
 object SplitLineBalanceCommon {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
     val acct = acctLook(pn)

@@ -68,6 +68,10 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "split common" in {
     SplitLineBalanceCommon(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
   }
+  
+  "split serial" in {
+    SplitLineBalanceSerial(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
+  }
 
   "split common map" in {
     SplitLineBalanceCommonMap(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
