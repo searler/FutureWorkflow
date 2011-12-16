@@ -89,7 +89,7 @@ object SplitLineBalanceFiltered {
     for {
       b1 <- std if b1 == Bal(124.5F)
       b2 <- spec
-    } yield b1 //cannot reference b2 due to Any type on filter
+    } yield b1   //cannot reference b2 due to Any type on filter
   }
 }
 
@@ -221,5 +221,10 @@ object BalancesByFor {
 object BalanceByMap {
   def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] =
     BalancesByMap(id) map { _.reduce(_ + _) }
+}
+
+object BalanceParallel {
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = 
+    numLook(id) flatMap {ns=>Futures.reduce(ns map {acctLook(_) flatMap {balLook}})(_ + _)}
 }
 

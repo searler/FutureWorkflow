@@ -120,6 +120,10 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "bbm" in {
     BalanceByMap(Id(123)).get must beEqualTo(Bal(125.5F))
   }
+  
+  "balance parallel" in {
+    BalanceParallel(Id(123)).get must beEqualTo(Bal(125.5F))
+  }
 
   "bsbf" in {
     BalancesByFor(Id(123)).get must beEqualTo(List(Bal(124.5F), Bal(1.0F)))
