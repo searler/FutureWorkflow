@@ -89,7 +89,7 @@ object SplitLineBalanceFiltered {
     for {
       b1 <- std if b1 == Bal(124.5F)
       b2 <- spec
-    } yield b1   //cannot reference b2 due to Any type on filter
+    } yield b2 + b1.asInstanceOf[Bal] //need cast due to Any type on filter. Fixed in 2.0
   }
 }
 
@@ -167,6 +167,22 @@ object SplitLineBalance {
   }
 }
 
+object SplitLineBalanceTuple2 {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[(Bal, Bal)] = {
+    val std = acctLook(pn) flatMap { balLook(_) }
+    val spec = acctLook(pn) flatMap { special(_) }
+    Flow.tuple(std, spec)
+  }
+}
+
+object SplitLineBalanceTuple2Id {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[(Num, Bal, Bal)] = {
+    val std = acctLook(pn) flatMap { balLook(_) }
+    val spec = acctLook(pn) flatMap { special(_) }
+    Flow.tuple(pn, std, spec)
+  }
+}
+
 object RecoverNumBalance {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
     acctLook(pn) flatMap { balLook(_) } recover { case _ => Bal(0F) }
@@ -224,7 +240,7 @@ object BalanceByMap {
 }
 
 object BalanceParallel {
-  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = 
-    numLook(id) flatMap {ns=>Futures.reduce(ns map {acctLook(_) flatMap {balLook}})(_ + _)}
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] =
+    numLook(id) flatMap { ns => Futures.reduce(ns map { acctLook(_) flatMap { balLook } })(_ + _) }
 }
 

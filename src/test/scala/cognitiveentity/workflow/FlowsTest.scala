@@ -56,7 +56,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   }
 
   "splitFiltered" in {
-    SplitLineBalanceFiltered(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
+    SplitLineBalanceFiltered(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
     SplitLineBalanceFiltered(Num("333-555-1234")).result must beEqualTo(None)
   }
 
@@ -68,7 +68,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "split common" in {
     SplitLineBalanceCommon(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
   }
-  
+
   "split serial" in {
     SplitLineBalanceSerial(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
   }
@@ -76,13 +76,21 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "split common map" in {
     SplitLineBalanceCommonMap(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
   }
-  
+
   "split list" in {
     SplitLineBalanceList(Num("124-555-1234")).get must beEqualTo(List(Bal(124.5F), Bal(1000.0F)))
   }
+
+  "split tuple" in {
+    SplitLineBalanceTuple(Num("124-555-1234")).get must beEqualTo((Num("124-555-1234"), Acct("alpha"), Bal(124.5F), Bal(1000.0F)))
+  }
+
+  "split tuple2" in {
+    SplitLineBalanceTuple2(Num("124-555-1234")).get must beEqualTo((Bal(124.5F), Bal(1000.0F)))
+  }
   
-   "split tuple" in {
-    SplitLineBalanceTuple(Num("124-555-1234")).get must beEqualTo((Num("124-555-1234"),Acct("alpha"),Bal(124.5F), Bal(1000.0F)))
+  "split tuple2 id" in {
+    SplitLineBalanceTuple2Id(Num("124-555-1234")).get must beEqualTo((Num("124-555-1234"),Bal(124.5F), Bal(1000.0F)))
   }
 
   "split" in {
@@ -92,7 +100,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     noResult.result must beEqualTo(None)
     noResult.exception.get.getMessage() must beEqualTo("key not found: Num(xxx)")
   }
-  
+
   "slbna" in {
     SingleLineBalanceNoArgs(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
   }
@@ -120,7 +128,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "bbm" in {
     BalanceByMap(Id(123)).get must beEqualTo(Bal(125.5F))
   }
-  
+
   "balance parallel" in {
     BalanceParallel(Id(123)).get must beEqualTo(Bal(125.5F))
   }
@@ -132,15 +140,14 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "bsbm" in {
     BalancesByMap(Id(123)).get must beEqualTo(List(Bal(124.5F), Bal(1.0F)))
   }
-  
+
   "accounts by for" in {
     AccountsByFor(Id(123)).get must beEqualTo(List(Acct("alpha"), Acct("beta")))
   }
-  
+
   "accounts by traverse" in {
     AccountsByTraverse(Id(123)).get must beEqualTo(List(Acct("alpha"), Acct("beta")))
   }
-
 
   private abstract class MapService[K, V](map: Map[K, V]) {
     self: Function1[K, Future[V]] =>

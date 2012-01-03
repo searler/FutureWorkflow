@@ -23,8 +23,23 @@ import akka.dispatch.Future
  * The Lookup trait represents the generic form of an async call to
  * an external service.
  */
-trait Lookup[A, R] extends Function1[A,Future[R]] {
+trait Lookup[A, R] extends Function1[A, Future[R]] {
   def apply(arg: A): Future[R]
+}
+
+object Flow {
+  def tuple[A, B](af: Future[A], bf: Future[B]) = 
+    for {
+       a <- af
+       b <- bf
+    } yield (a, b)
+    
+     def tuple[I,A, B](id:I,af: Future[A], bf: Future[B]) = 
+    for {
+       a <- af
+       b <- bf
+    } yield (id,a, b)
+
 }
 
     
