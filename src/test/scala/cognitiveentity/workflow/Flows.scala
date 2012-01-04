@@ -35,13 +35,6 @@ trait SpecialBalLookup extends Function1[Acct, Future[Bal]]
 trait BalLookup extends Function1[Acct, Future[Bal]]
 
 /**
- * Optimized return of a known value
- */
-object Ret {
-  def apply[T](v: T): Future[T] = new akka.dispatch.AlreadyCompletedFuture(new Right(v))
-}
-
-/**
  * A no-op flow that simply returns the Num, expensively
  */
 object NoOp {
@@ -79,6 +72,11 @@ object SingleLineBalance {
 object SingleLineBalanceNoArgs {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
     acctLook(pn) flatMap { balLook }
+  }
+}
+object SingleLineBalanceDoubled {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
+    acctLook(pn) flatMap { balLook } map { _ * 2 }
   }
 }
 
@@ -185,7 +183,7 @@ object SplitLineBalanceTuple2Id {
 
 object RecoverNumBalance {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
-    acctLook(pn) flatMap { balLook(_) } recover { case _ => Bal(0F) }
+    acctLook(pn) flatMap { balLook(_) } recover { case _ => Bal(0F) } map { _ + Bal(66F) }
   }
 }
 

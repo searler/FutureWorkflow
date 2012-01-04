@@ -54,9 +54,9 @@ object AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   }
 
   "rnb" in {
-    RecoverNumBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
-    RecoverNumBalance.apply(null).get must beEqualTo(Bal(0F))
-    RecoverNumBalance.apply(Num("xxxx")).get must beEqualTo(Bal(0.0F))
+    RecoverNumBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(190.5F))
+    RecoverNumBalance.apply(null).get must beEqualTo(Bal(66F))
+    RecoverNumBalance.apply(Num("xxxx")).get must beEqualTo(Bal(66F))
   }
 
   "fnbIf" in {

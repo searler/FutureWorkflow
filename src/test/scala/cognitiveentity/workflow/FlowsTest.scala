@@ -104,6 +104,10 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "slbna" in {
     SingleLineBalanceNoArgs(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
   }
+  
+  "slb doubled" in {
+    SingleLineBalanceDoubled(Num("124-555-1234")).get must beEqualTo(Bal(249F))
+  }
 
   "slb" in {
     SingleLineBalance(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
@@ -114,9 +118,9 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   }
 
   "rnb" in {
-    RecoverNumBalance(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
-    RecoverNumBalance(null).get must beEqualTo(Bal(0F))
-    RecoverNumBalance(Num("xxxx")).get must beEqualTo(Bal(0.0F))
+    RecoverNumBalance(Num("124-555-1234")).get must beEqualTo(Bal(190.5F))
+    RecoverNumBalance(null).get must beEqualTo(Bal(66F))
+    RecoverNumBalance(Num("xxxx")).get must beEqualTo(Bal(66F))
   }
 
   "fnbIf" in {

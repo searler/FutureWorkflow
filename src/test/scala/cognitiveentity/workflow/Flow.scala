@@ -28,19 +28,24 @@ trait Lookup[A, R] extends Function1[A, Future[R]] {
 }
 
 object Flow {
-  def tuple[A, B](af: Future[A], bf: Future[B]) = 
+  def tuple[A, B](af: Future[A], bf: Future[B]) =
     for {
-       a <- af
-       b <- bf
+      a <- af
+      b <- bf
     } yield (a, b)
-    
-     def tuple[I,A, B](id:I,af: Future[A], bf: Future[B]) = 
+
+  def tuple[I, A, B](id: I, af: Future[A], bf: Future[B]) =
     for {
-       a <- af
-       b <- bf
-    } yield (id,a, b)
+      a <- af
+      b <- bf
+    } yield (id, a, b)
 
 }
 
-    
+/**
+ * Optimized return of a known value
+ */
+object Ret {
+  def apply[T](v: T): Future[T] = new akka.dispatch.AlreadyCompletedFuture(new Right(v))
+}  
 
