@@ -40,6 +40,6 @@ case class Acct(s: String)
  */
 case class Bal(v: Float) {
   def +(o: Bal) = Bal(v + o.v)
-  def *(m: Int) = Bal(v * m)
+  def *(m: Float) = Bal(v * m)
 }
 

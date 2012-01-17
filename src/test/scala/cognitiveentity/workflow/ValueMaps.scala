@@ -36,5 +36,8 @@ object ValueMaps {
   val balMap = Map(Acct("alpha") -> Bal(124.5F),
     Acct("beta") -> Bal(1.0F),
     Acct("gamma") -> Bal(11.0F))
+  val discountMap = Map(Acct("alpha") -> true,
+    Acct("beta") -> false,
+    Acct("gamma") -> true)
 
 }

@@ -28,3 +28,4 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
  //parallelExecution in Test := false
 
+

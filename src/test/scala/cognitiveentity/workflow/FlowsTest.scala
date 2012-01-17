@@ -33,10 +33,29 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   private implicit val stdBalLook: Lookup[Acct, Bal] = StdBalService
   private implicit val special = SpecialService
   private implicit val numLook = Service(ValueMaps.numMap)
+  private implicit val discountLook = Service(ValueMaps.discountMap)
 
   "phones" in {
     Phones(Id(123)).get must beEqualTo(List(Num("124-555-1234"), Num("333-555-1234")))
     Phones(Id(-1)).await.exception.get.getMessage() must beEqualTo("key not found: Id(-1)")
+  }
+
+  "balance" in {
+    Balance(Acct("alpha")).get must beEqualTo(Bal(124.5F))
+  }
+
+  "discount" in {
+    Discount(Acct("alpha")).get must beEqualTo(Bal(124.5F * 0.9F))
+    Discount(Acct("beta")).get must beEqualTo(Bal(1.0F))
+  }
+
+  "discount by Phone number" in {
+    DiscountByPhone(Num("124-555-1234")).get must beEqualTo(Bal(124.5F * 0.9F))
+    DiscountByPhone(Num("333-555-1234")).get must beEqualTo(Bal(1.0F))
+  }
+
+  "discount by id" in {
+    DiscountById(Id(123)).get must beEqualTo(Bal(124.5F * 0.9F + 1.0F))
   }
 
   "special" in {
@@ -48,6 +67,8 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   }
 
   "noop" in {
+    import akka.dispatch.Future
+    import akka.dispatch.Futures
     NoOp(Num("124-555-1234")).get must beEqualTo(Num("124-555-1234"))
   }
 
@@ -88,9 +109,9 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "split tuple2" in {
     SplitLineBalanceTuple2(Num("124-555-1234")).get must beEqualTo((Bal(124.5F), Bal(1000.0F)))
   }
-  
+
   "split tuple2 id" in {
-    SplitLineBalanceTuple2Id(Num("124-555-1234")).get must beEqualTo((Num("124-555-1234"),Bal(124.5F), Bal(1000.0F)))
+    SplitLineBalanceTuple2Id(Num("124-555-1234")).get must beEqualTo((Num("124-555-1234"), Bal(124.5F), Bal(1000.0F)))
   }
 
   "split" in {
@@ -104,7 +125,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "slbna" in {
     SingleLineBalanceNoArgs(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
   }
-  
+
   "slb doubled" in {
     SingleLineBalanceDoubled(Num("124-555-1234")).get must beEqualTo(Bal(249F))
   }

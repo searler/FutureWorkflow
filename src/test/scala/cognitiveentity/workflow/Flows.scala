@@ -48,6 +48,30 @@ object NoOpOptimized {
   def apply(pn: Num) = Ret(pn)
 }
 
+object Balance {
+  def apply(acct: Acct)(implicit balLook: Lookup[Acct, Bal]): Future[Bal] = balLook(acct)
+}
+
+object Discount {
+  def apply(acct: Acct)(implicit balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean]): Future[Bal] = {
+    val balance = balLook(acct)
+    val special = specialLook(acct)
+    for {
+      val bal <- balance
+      val spec <- special
+    } yield if (spec) bal * 0.9F else bal
+  }
+}
+
+object DiscountByPhone {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean]): Future[Bal] =
+    acctLook(pn) flatMap { Discount(_) }
+}
+
+object DiscountById {
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean]): Future[Bal] =
+    numLook(id) flatMap { Future.traverse(_)(DiscountByPhone(_)) } map { _.reduce(_ + _) }
+}
 /**
  *
  */
