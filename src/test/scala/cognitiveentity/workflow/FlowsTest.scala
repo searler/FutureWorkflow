@@ -175,7 +175,6 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   }
 
   private abstract class MapService[K, V](map: Map[K, V]) {
-    self: Function1[K, Future[V]] =>
     def apply(a: K) = Future(map(a))
   }
 
