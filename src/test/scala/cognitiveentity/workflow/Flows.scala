@@ -68,6 +68,15 @@ object DiscountByPhone {
     acctLook(pn) flatMap { Discount(_) }
 }
 
+object SpecialCaseBalance {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] =
+    pn match {
+      case Num("911") => Future(Bal(0F))
+      case Num("555-555-5555") => Future(Bal(1000000F))
+      case _ => acctLook(pn) flatMap { balLook }
+    }
+}
+
 object DiscountById {
   def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean]): Future[Bal] =
     numLook(id) flatMap { Future.traverse(_)(DiscountByPhone(_)) } map { _.reduce(_ + _) }
