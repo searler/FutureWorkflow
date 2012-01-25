@@ -7,6 +7,7 @@ Note the lack of a src directory. The implementation is sufficiently simple that
 
 ## Discussion
 [Implementation](http://cognitiveentity.wordpress.com/2012/01/16/choreography-using-akka-futures-1/)
+
 [Unit testing](http://cognitiveentity.wordpress.com/2012/01/17/unit-testing-akka-future-based-choreography/)
 
 # Structure
