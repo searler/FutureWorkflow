@@ -18,10 +18,10 @@ resolvers ++= Seq( "releases"  at "http://scala-tools.org/repo-releases")
 //AKKA
 
 libraryDependencies ++= Seq(
-   "se.scalablesolutions.akka" % "akka-actor" % "1.3-RC5"
-   ,"se.scalablesolutions.akka" % "akka-camel" % "1.3-RC5"
-   ,"se.scalablesolutions.akka" % "akka-remote" % "1.3-RC5"
-   ,"org.apache.camel" % "camel-scala" % "2.8.2"
+   "se.scalablesolutions.akka" % "akka-actor" % "1.3"
+   ,"se.scalablesolutions.akka" % "akka-camel" % "1.3"
+   ,"se.scalablesolutions.akka" % "akka-remote" % "1.3"
+   ,"org.apache.camel" % "camel-scala" % "2.9.0"
  )
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
