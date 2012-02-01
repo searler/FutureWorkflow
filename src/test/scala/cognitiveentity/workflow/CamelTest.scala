@@ -97,7 +97,6 @@ case class OWFlow[A, R](in: String, out: String, flow: A => Future[R]) {
       case akka.camel.Message(a: A, _) => (Future(a).flatMap(flow)).onComplete { outActor ! _ }
     }
   }
-
 }
 
 /**
@@ -214,7 +213,7 @@ object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
     template.requestBody("seda:bal", Acct("alpha")) must beEqualTo(Bal(124.5F))
     template.requestBody("seda:bal", Acct("beta")) must beEqualTo(Bal(1F))
   }
-  
+
   "placeholder" in {
     success
   }
