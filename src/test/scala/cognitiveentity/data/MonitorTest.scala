@@ -33,7 +33,7 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "convert" in {
     val mint: Monitor[Int] = 123
-    val mfloat = mint.convert { _ * 2F }
+    val mfloat:Monitor[Float] = mint.convert { _ * 2F }
     mfloat { ident } must beEqualTo(246F)
   }
 
@@ -58,14 +58,6 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
     val depdep = mdep.depend { _.toString }
     depdep { ident } must beEqualTo("246.0")
 
-  }
-
-  "type" in {
-    val mint: Monitor[Int] = 123
-    val xint: Monitor[Int] = 123
-
-    val x = new mint.Dependent(xint, 12) //TODO want failure
-    success
   }
 
   "implicit" in {
