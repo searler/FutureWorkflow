@@ -37,6 +37,19 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
     mfloat { ident } must beEqualTo(246F)
   }
 
+  "convert via apply" in {
+    val mint: Monitor[Int] = 123
+    val mfloat: Monitor[Float] = mint { _ * 2F }
+    mfloat { ident } must beEqualTo(246F)
+  }
+
+  "convert via apply with implicit" in {
+    implicit def toString[T](v: T): String = v.toString
+    val mint: Monitor[Int] = 123
+    val mfloat: Monitor[String] = mint { _ * 2F }
+    mfloat { ident } must beEqualTo("246.0")
+  }
+
   "depend" in {
     val mint: Monitor[Int] = 123
 
