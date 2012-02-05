@@ -33,7 +33,7 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "convert" in {
     val mint: Monitor[Int] = 123
-    val mfloat:Monitor[Float] = mint.convert { _ * 2F }
+    val mfloat: Monitor[Float] = mint.convert { _ * 2F }
     mfloat { ident } must beEqualTo(246F)
   }
 
