@@ -111,30 +111,21 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
   }
 
   "case class" in {
-    sealed trait MA
-    sealed trait MB
+    implicit def toString[T](v: T): String = v.toString
 
-    val ma: TaggedMonitor[MA, Int] = 123
-    ma { _ * 2 } must beEqualTo(246)
+    case class A(s: Int) extends BaseMonitor[String, Int]
 
-    val mb: TaggedMonitor[MB, Int] = 123
+    val a = A(12)
+    a.s must beEqualTo(12)
+    a { _ * 2 } must beEqualTo("1212")
+    // a.v inaccessible
+    type XML = BaseMonitor[org.w3c.dom.Document, String]
+    implicit def toDom(s: String): Document = (DocumentBuilderFactory.newInstance().newDocumentBuilder()).parse(new InputSource(new StringReader(s)))
 
-    // val mbfail :TaggedMonitor[MB,Int] = ma
+    case class XA(s: String) extends XML
 
-    (ma match {
-      case x: TaggedMonitor[MA, Int] => x
-      case _ => null
-    }) must beEqualTo(ma)
-
-    def fn(v: TaggedMonitor[_, Int]):String = v match {
-    //  case x: TaggedMonitor[MA, Int] => "a"
-    //  case x: TaggedMonitor[MB, Int] => "b"
-      case _ => null
-    }
-
-    fn(ma) must beEqualTo("a")
-    fn(mb) must beEqualTo("b")
-
+    val mdoc = XA("<xml><key>value</key></xml>")
+    mdoc { _.getDocumentElement.getTextContent } must beEqualTo("value")
   }
 
   "type" in {
