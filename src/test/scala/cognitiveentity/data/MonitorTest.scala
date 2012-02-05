@@ -61,7 +61,7 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
   }
 
   "implicit" in {
-    implicit def toString[T](v: Monitor[T]): String = v { _.toString }
+    implicit def toString[M, T](v: Monitor[T]): String = v { _.toString }
     val mint: Monitor[Int] = 123
     val s: String = mint
     s must beEqualTo("123")
@@ -84,6 +84,71 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
       case _ => failure
     }
     result
+  }
+
+  "trait" in {
+    sealed trait MA
+    sealed trait MB
+
+    val ma: TaggedMonitor[MA, Int] = 123
+    ma { _ * 2 } must beEqualTo(246)
+
+    val mb: TaggedMonitor[MB, Int] = 123
+
+    // val mbfail :TaggedMonitor[MB,Int] = ma
+
+    (ma match {
+      case x: TaggedMonitor[MA, Int] => x
+      case _ => null
+    }) must beEqualTo(ma)
+
+    def fn(v: TaggedMonitor[MB, Int]) = "b"
+    def gn(v: TaggedMonitor[MA, Int]) = "a"
+
+    //   fn(ma) must beEqualTo("a")
+    fn(mb) must beEqualTo("b")
+
+  }
+
+  "case class" in {
+    sealed trait MA
+    sealed trait MB
+
+    val ma: TaggedMonitor[MA, Int] = 123
+    ma { _ * 2 } must beEqualTo(246)
+
+    val mb: TaggedMonitor[MB, Int] = 123
+
+    // val mbfail :TaggedMonitor[MB,Int] = ma
+
+    (ma match {
+      case x: TaggedMonitor[MA, Int] => x
+      case _ => null
+    }) must beEqualTo(ma)
+
+    def fn(v: TaggedMonitor[_, Int]):String = v match {
+    //  case x: TaggedMonitor[MA, Int] => "a"
+    //  case x: TaggedMonitor[MB, Int] => "b"
+      case _ => null
+    }
+
+    fn(ma) must beEqualTo("a")
+    fn(mb) must beEqualTo("b")
+
+  }
+
+  "type" in {
+    sealed trait MA
+    sealed trait MB
+
+    case class H[M, T](v: T)
+
+    var v1 = H[MA, Int](12)
+    var v2 = H[MB, Int](12)
+
+    //  v1 = v2
+
+    success
   }
 
 }
