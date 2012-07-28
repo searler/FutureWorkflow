@@ -20,7 +20,10 @@
 package cognitiveentity.workflow
 
 import org.specs2.mutable._
-import akka.dispatch.Future
+import akka.dispatch._
+
+import akka.util.Duration
+import java.util.concurrent.TimeUnit
 
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -28,16 +31,22 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
+  private implicit val ec = ExecutionContext.fromExecutorService(java.util.concurrent.Executors.newFixedThreadPool(4))
+
   private implicit val acctLook: Lookup[Num, Acct] = Service(ValueMaps.acctMap)
   private implicit val balLook: BalLookup = BalService
   private implicit val stdBalLook: Lookup[Acct, Bal] = StdBalService
   private implicit val special = SpecialService
   private implicit val numLook = Service(ValueMaps.numMap)
   private implicit val discountLook = Service(ValueMaps.discountMap)
+  
+  import Getter._
 
+  
   "phones" in {
     Phones(Id(123)).get must beEqualTo(List(Num("124-555-1234"), Num("333-555-1234")))
-    Phones(Id(-1)).await.exception.get.getMessage() must beEqualTo("key not found: Id(-1)")
+    Phones(Id(-1)).exception must beEqualTo("key not found: Id(-1)")
+
   }
 
   "balance" in {
@@ -67,8 +76,6 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   }
 
   "noop" in {
-    import akka.dispatch.Future
-    import akka.dispatch.Futures
     NoOp(Num("124-555-1234")).get must beEqualTo(Num("124-555-1234"))
   }
 
@@ -78,7 +85,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "splitFiltered" in {
     SplitLineBalanceFiltered(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
-    SplitLineBalanceFiltered(Num("333-555-1234")).result must beEqualTo(None)
+    SplitLineBalanceFiltered(Num("333-555-1234")).option must beEqualTo(None)
   }
 
   "split first" in {
@@ -116,10 +123,10 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "split" in {
     SplitLineBalance(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
-    SplitLineBalance(Num("124-555-1234")).await.result must beEqualTo(Some(Bal(1124.5F)))
-    val noResult = SplitLineBalance(Num("xxx")).await
-    noResult.result must beEqualTo(None)
-    noResult.exception.get.getMessage() must beEqualTo("key not found: Num(xxx)")
+      SplitLineBalance(Num("124-555-1234")).option must beEqualTo(Some(Bal(1124.5F)))
+    val noResult = SplitLineBalance(Num("xxx")).either
+    noResult.isLeft must beTrue
+    noResult.left.get.getMessage must beEqualTo("key not found: Num(xxx)") 
   }
 
   "slbna" in {
@@ -132,10 +139,9 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "slb" in {
     SingleLineBalance(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
-    SingleLineBalance(Num("124-555-1234")).await.result must beEqualTo(Some(Bal(124.5F)))
-    val noResult = SingleLineBalance(Num("xxx")).await
-    noResult.result must beEqualTo(None)
-    noResult.exception.get.getMessage() must beEqualTo("key not found: Num(xxx)")
+     SingleLineBalance(Num("124-555-1234")).option must beEqualTo(Some(Bal(124.5F)))
+    val noResult = SingleLineBalance(Num("xxx")).either
+    noResult.left.get.getMessage() must beEqualTo("key not found: Num(xxx)") 
   }
 
   "rnb" in {
@@ -174,7 +180,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     AccountsByTraverse(Id(123)).get must beEqualTo(List(Acct("alpha"), Acct("beta")))
   }
 
-  private abstract class MapService[K, V](map: Map[K, V]) {
+  private abstract class MapService[K, V](map: Map[K, V])(implicit ec: ExecutionContext) {
     def apply(a: K) = Future(map(a))
   }
 

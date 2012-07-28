@@ -1,6 +1,6 @@
 name := "Akka Actor Workflow"
 
-version := "0.1"
+version := "0.2"
 
 scalaVersion := "2.9.1"
 
@@ -13,18 +13,11 @@ libraryDependencies ++= Seq(
    "junit" % "junit" % "4.7"
    )
 
-resolvers ++= Seq( "releases"  at "http://scala-tools.org/repo-releases")
-
-//AKKA
-
-libraryDependencies ++= Seq(
-   "se.scalablesolutions.akka" % "akka-actor" % "1.3"
-   ,"se.scalablesolutions.akka" % "akka-camel" % "1.3"
-   ,"se.scalablesolutions.akka" % "akka-remote" % "1.3"
-   ,"org.apache.camel" % "camel-scala" % "2.9.0"
- )
-
+scalaVersion := "2.9.1"
+ 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+ 
+libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0.2"
 
  //parallelExecution in Test := false
 

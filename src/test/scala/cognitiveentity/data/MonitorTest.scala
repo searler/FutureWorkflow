@@ -1,7 +1,7 @@
 package cognitiveentity.data
 
 import org.specs2.mutable._
-import akka.dispatch.Future
+
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import javax.xml.parsers.DocumentBuilderFactory
@@ -96,11 +96,23 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
     val mb: TaggedMonitor[MB, Int] = 123
 
     // val mbfail :TaggedMonitor[MB,Int] = ma
-
-    (ma match {
+    
+    def fun(y:Any) = (y match {
       case x: TaggedMonitor[MA, Int] => x
       case _ => null
-    }) must beEqualTo(ma)
+    })
+   
+
+    fun(ma) must beEqualTo(ma)
+    
+     def disc(y:Any) = (y match {
+      case x: TaggedMonitor[MA, Int] => "a"
+      case x: TaggedMonitor[MB, Int] => "b"
+      case _ => null
+    })
+    
+    disc(ma) must beEqualTo("a")
+  //  disc(mb) must beEqualTo("b")
 
     def fn(v: TaggedMonitor[MB, Int]) = "b"
     def gn(v: TaggedMonitor[MA, Int]) = "a"
@@ -108,6 +120,18 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
     //   fn(ma) must beEqualTo("a")
     fn(mb) must beEqualTo("b")
 
+  }
+  
+  "dom trait" in {
+    def content(d: Document) = d.getDocumentElement.getTextContent
+    implicit def toDom(s: String): Document = (DocumentBuilderFactory.newInstance().newDocumentBuilder()).parse(new InputSource(new StringReader(s)))
+    
+    sealed trait MA
+    
+     val mdoc: TaggedMonitor[MA, Document] = "<xml><key>value</key></xml>"
+    mdoc { content } must beEqualTo("value")
+    val mstring = mdoc.convert(content)
+    mstring { ident } must beEqualTo("value")
   }
 
   "case class" in {
@@ -137,7 +161,7 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
     var v1 = H[MA, Int](12)
     var v2 = H[MB, Int](12)
 
-    //  v1 = v2
+   //   v1 = v2
 
     success
   }

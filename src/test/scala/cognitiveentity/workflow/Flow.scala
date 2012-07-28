@@ -18,6 +18,8 @@
  */
 package cognitiveentity.workflow
 import akka.dispatch.Future
+import akka.dispatch.Promise
+import akka.dispatch.ExecutionContext
 
 /**
  * The Lookup trait represents the generic form of an async call to
@@ -46,6 +48,6 @@ object Flow {
  * Optimized return of a known value
  */
 object Ret {
-  def apply[T](v: T): Future[T] = new akka.dispatch.AlreadyCompletedFuture(new Right(v))
+  def apply[T](v: T)(implicit ec: ExecutionContext): Future[T] = Promise.successful(v)
 }  
 

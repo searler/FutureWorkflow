@@ -28,8 +28,8 @@
  * @author Richard Searle
  */
 package cognitiveentity.workflow
-import akka.dispatch.Future
-import akka.dispatch.Futures
+import akka.dispatch._
+
 
 trait SpecialBalLookup extends Function1[Acct, Future[Bal]]
 trait BalLookup extends Function1[Acct, Future[Bal]]
@@ -38,14 +38,14 @@ trait BalLookup extends Function1[Acct, Future[Bal]]
  * A no-op flow that simply returns the Num, expensively
  */
 object NoOp {
-  def apply(pn: Num) = Future(pn)
+  def apply(pn: Num)(implicit ec:ExecutionContext) = Future(pn)
 }
 
 /**
  * A no-op flow that simply returns the  Num
  */
 object NoOpOptimized {
-  def apply(pn: Num) = Ret(pn)
+  def apply(pn: Num)(implicit ec: ExecutionContext) = Ret(pn)
 }
 
 object Balance {
@@ -69,7 +69,7 @@ object DiscountByPhone {
 }
 
 object SpecialCaseBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] =
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal],ec:ExecutionContext): Future[Bal] =
     pn match {
       case Num("911") => Future(Bal(0F))
       case Num("555-555-5555") => Future(Bal(1000000F))
@@ -78,7 +78,7 @@ object SpecialCaseBalance {
 }
 
 object DiscountById {
-  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean]): Future[Bal] =
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean],ec:ExecutionContext): Future[Bal] =
     numLook(id) flatMap { Future.traverse(_)(DiscountByPhone(_)) } map { _.reduce(_ + _) }
 }
 /**
@@ -125,10 +125,10 @@ object SplitLineBalanceFiltered {
 }
 
 object SplitLineBalanceFirst {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup,ec:ExecutionContext): Future[Bal] = {
     val std = acctLook(pn) flatMap { balLook(_) }
     val spec = acctLook(pn) flatMap { special(_) }
-    Futures.firstCompletedOf(List(std, spec))
+    Future.firstCompletedOf(List(std, spec))
   }
 }
 
@@ -166,7 +166,7 @@ object SplitLineBalanceCommonMap {
 }
 
 object SplitLineBalanceList {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[List[Bal]] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup,ec:ExecutionContext): Future[List[Bal]] = {
     val acct = acctLook(pn)
     val std = acct flatMap { balLook(_) }
     val spec = acct flatMap { special(_) }
@@ -221,7 +221,7 @@ object RecoverNumBalance {
 }
 
 object IfNumBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal],ec:ExecutionContext): Future[Bal] = {
     if (pn == null)
       Ret(Bal(0F))
     else
@@ -234,7 +234,7 @@ object Phones {
 }
 
 object AccountsByFor {
-  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct]): Future[List[Acct]] = {
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct],ec:ExecutionContext): Future[List[Acct]] = {
     val nums = numLook(id)
     for {
       ns <- nums
@@ -244,18 +244,18 @@ object AccountsByFor {
 }
 
 object AccountsByTraverse {
-  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct]): Future[List[Acct]] = {
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct],ec:ExecutionContext): Future[List[Acct]] = {
     numLook(id) flatMap { Future.traverse(_)(acctLook) }
   }
 }
 
 object BalancesByMap {
-  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[List[Bal]] =
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal],ec:ExecutionContext): Future[List[Bal]] =
     numLook(id) flatMap { Future.traverse(_) { acctLook(_) flatMap { balLook } } }
 }
 
 object BalancesByFor {
-  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[List[Bal]] =
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal],ec:ExecutionContext): Future[List[Bal]] =
     {
       val nums: Future[List[Num]] = numLook(id)
       for {
@@ -266,12 +266,12 @@ object BalancesByFor {
 }
 
 object BalanceByMap {
-  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] =
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal],ec:ExecutionContext): Future[Bal] =
     BalancesByMap(id) map { _.reduce(_ + _) }
 }
 
 object BalanceParallel {
-  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] =
-    numLook(id) flatMap { ns => Futures.reduce(ns map { acctLook(_) flatMap { balLook } })(_ + _) }
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal],ec:ExecutionContext): Future[Bal] =
+    numLook(id) flatMap { ns => Future.reduce(ns map { acctLook(_) flatMap { balLook } })(_ + _) }
 }
 

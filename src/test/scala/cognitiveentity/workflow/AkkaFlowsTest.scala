@@ -18,39 +18,50 @@
  */
 package cognitiveentity.workflow
 import akka.dispatch.Future
- import org.junit.runner.RunWith
-  import org.specs2.runner.JUnitRunner
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
+import akka.dispatch.ExecutionContext
+import akka.actor.ActorSystem
+import akka.actor.Props
+import akka.util.Timeout
+import java.util.concurrent.TimeUnit
+import akka.dispatch.Promise
 
-case class ActorService[K, V](values: Map[K, V]) extends Lookup[K, V] {
+case class ActorService[K, V](values: Map[K, V])(implicit m: Manifest[V], system: ActorSystem) extends Lookup[K, V] {
   import akka.actor.Actor
   import akka.dispatch.Future
 
-  val act = Actor.actorOf(new SActor).start
+  val act = system.actorOf(Props(new SActor))
 
-  def apply(arg: K): Future[V] = (act ? arg).map { _.asInstanceOf[V] }
+  import akka.pattern.ask
+
+  implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
+
+  def apply(arg: K): Future[V] = (act ? arg).mapTo[Option[V]].map {_.get}
 
   private class SActor extends Actor {
     def receive = {
-      case a => self.reply(values(a.asInstanceOf[K]))
+      case a => sender ! values.get(a.asInstanceOf[K])
     }
   }
 
 }
 
-
- @RunWith(classOf[JUnitRunner])
+@RunWith(classOf[JUnitRunner])
 object AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
+
+  implicit val system = ActorSystem("MySystem")
 
   implicit val acctLook: Lookup[Num, Acct] = ActorService(ValueMaps.acctMap)
   implicit val balLook: Lookup[Acct, Bal] = ActorService(ValueMaps.balMap)
   implicit val numLook = ActorService(ValueMaps.numMap)
 
+  import Getter._
+
   "slb" in {
     SingleLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
-    SingleLineBalance.apply(Num("124-555-1234")).await.result must beEqualTo(Some(Bal(124.5F)))
-    val noResult = SingleLineBalance.apply(Num("xxx")).await
-    noResult.result must beEqualTo(None)
-    noResult.exception.get.getMessage() must beEqualTo("key not found: Num(xxx)")
+    SingleLineBalance.apply(Num("124-555-1234")).option must beEqualTo(Some(Bal(124.5F)))
+
   }
 
   "rnb" in {
@@ -76,11 +87,12 @@ object AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "bsbm" in {
     BalancesByMap.apply(Id(123)).get must beEqualTo(List(Bal(124.5F), Bal(1.0F)))
   }
-  
-   "slb loop" in {
-     val cnt = 50
-    Future.traverse( ( 0 until cnt).toList){ _ =>SingleLineBalance.apply(Num("124-555-1234"))}.get.size must beEqualTo(cnt)
-   
-    }
+
+  "slb loop" in {
+    val cnt = 50
+    Future.traverse((0 until cnt).toList) { _ => SingleLineBalance.apply(Num("124-555-1234")) }.get.size must beEqualTo(cnt)
+
+  }
 
 }
+
