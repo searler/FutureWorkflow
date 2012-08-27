@@ -7,6 +7,7 @@ scalaVersion := "2.10.0-M7"
 
 //Specs2
 libraryDependencies ++= Seq(
+  "org.apache.camel" % "camel-scala" % "2.10.0",
  "org.specs2" % "specs2_2.10.0-M7" % "1.12.1.1",
  //  "org.specs2" %% "specs2" % "2.10",
  //  "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test",
@@ -23,7 +24,9 @@ resolvers += "Typesafe" at "https://oss.sonatype.org/content/repositories/releas
  resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
                     "releases"  at "http://oss.sonatype.org/content/repositories/releases")
  
-libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10.0-M7" % "2.1-M2"
+libraryDependencies ++= Seq("com.typesafe.akka" % "akka-actor_2.10.0-M7" % "2.1-M2",
+                            "com.typesafe.akka" % "akka-camel_2.10.0-M7" % "2.1-M2"
+                           )
 
  //parallelExecution in Test := false
 

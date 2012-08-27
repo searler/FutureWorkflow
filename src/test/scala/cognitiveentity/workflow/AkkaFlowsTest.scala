@@ -31,7 +31,7 @@ import scala.concurrent.Promise
 @RunWith(classOf[JUnitRunner])class AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   implicit val system = ActorSystem("MySystem")
-implicit val ec = system.dispatcher
+  implicit val ec = system.dispatcher
 
   implicit val acctLook: Lookup[Num, Acct] = ActorService(ValueMaps.acctMap)
   implicit val balLook: Lookup[Acct, Bal] = ActorService(ValueMaps.balMap)
@@ -79,7 +79,7 @@ case class ActorService[K, V](values: Map[K, V])(implicit m: Manifest[V], system
   
 
    val act = system.actorOf(Props(new SActor))
-implicit val ec = system.dispatcher
+   implicit val ec = system.dispatcher
 
   import akka.pattern.ask
 
