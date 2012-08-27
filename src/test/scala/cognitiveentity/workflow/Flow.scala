@@ -17,9 +17,9 @@
  * @author Richard Searle
  */
 package cognitiveentity.workflow
-import akka.dispatch.Future
-import akka.dispatch.Promise
-import akka.dispatch.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.Promise
+import scala.concurrent.ExecutionContext
 
 /**
  * The Lookup trait represents the generic form of an async call to
@@ -30,13 +30,13 @@ trait Lookup[A, R] extends Function1[A, Future[R]] {
 }
 
 object Flow {
-  def tuple[A, B](af: Future[A], bf: Future[B]) =
+  def tuple[A, B](af: Future[A], bf: Future[B])(implicit ec: ExecutionContext) =
     for {
       a <- af
       b <- bf
     } yield (a, b)
 
-  def tuple[I, A, B](id: I, af: Future[A], bf: Future[B]) =
+  def tuple[I, A, B](id: I, af: Future[A], bf: Future[B])(implicit ec: ExecutionContext) =
     for {
       a <- af
       b <- bf
@@ -48,6 +48,6 @@ object Flow {
  * Optimized return of a known value
  */
 object Ret {
-  def apply[T](v: T)(implicit ec: ExecutionContext): Future[T] = Promise.successful(v)
+  def apply[T](v: T)(implicit ec: ExecutionContext): Future[T] = Future.successful(v)
 }  
 

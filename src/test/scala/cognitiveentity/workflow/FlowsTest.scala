@@ -20,9 +20,9 @@
 package cognitiveentity.workflow
 
 import org.specs2.mutable._
-import akka.dispatch._
+import scala.concurrent._
 
-import akka.util.Duration
+import scala.concurrent.util.Duration
 import java.util.concurrent.TimeUnit
 
 import org.junit.runner.RunWith
@@ -124,7 +124,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "split" in {
     SplitLineBalance(Num("124-555-1234")).get must beEqualTo(Bal(1124.5F))
       SplitLineBalance(Num("124-555-1234")).option must beEqualTo(Some(Bal(1124.5F)))
-    val noResult = SplitLineBalance(Num("xxx")).either
+    val noResult = SplitLineBalance(Num("xxx")).asEither
     noResult.isLeft must beTrue
     noResult.left.get.getMessage must beEqualTo("key not found: Num(xxx)") 
   }
@@ -140,7 +140,7 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "slb" in {
     SingleLineBalance(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
      SingleLineBalance(Num("124-555-1234")).option must beEqualTo(Some(Bal(124.5F)))
-    val noResult = SingleLineBalance(Num("xxx")).either
+    val noResult = SingleLineBalance(Num("xxx")).asEither
     noResult.left.get.getMessage() must beEqualTo("key not found: Num(xxx)") 
   }
 

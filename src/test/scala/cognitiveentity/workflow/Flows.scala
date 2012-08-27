@@ -28,7 +28,7 @@
  * @author Richard Searle
  */
 package cognitiveentity.workflow
-import akka.dispatch._
+import scala.concurrent._
 
 
 trait SpecialBalLookup extends Function1[Acct, Future[Bal]]
@@ -53,18 +53,18 @@ object Balance {
 }
 
 object Discount {
-  def apply(acct: Acct)(implicit balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean]): Future[Bal] = {
+  def apply(acct: Acct)(implicit balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean], ec: ExecutionContext): Future[Bal] = {
     val balance = balLook(acct)
     val special = specialLook(acct)
     for {
-      val bal <- balance
-      val spec <- special
+       bal <- balance
+       spec <- special
     } yield if (spec) bal * 0.9F else bal
   }
 }
 
 object DiscountByPhone {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean]): Future[Bal] =
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean], ec: ExecutionContext): Future[Bal] =
     acctLook(pn) flatMap { Discount(_) }
 }
 
@@ -85,36 +85,36 @@ object DiscountById {
  *
  */
 object SpecialLineBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup, ec: ExecutionContext): Future[Bal] = {
     acctLook(pn) flatMap { special(_) }
   }
 }
 
 object OtherLineBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: BalLookup): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: BalLookup, ec: ExecutionContext): Future[Bal] = {
     acctLook(pn) flatMap { balLook(_) }
   }
 }
 
 object SingleLineBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], ec: ExecutionContext): Future[Bal] = {
     acctLook(pn) flatMap { balLook(_) }
   }
 }
 
 object SingleLineBalanceNoArgs {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], ec: ExecutionContext): Future[Bal] = {
     acctLook(pn) flatMap { balLook }
   }
 }
 object SingleLineBalanceDoubled {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], ec: ExecutionContext): Future[Bal] = {
     acctLook(pn) flatMap { balLook } map { _ * 2 }
   }
 }
 
 object SplitLineBalanceFiltered {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Any] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup, ec: ExecutionContext): Future[Any] = {
     val std = acctLook(pn) flatMap { balLook(_) }
     val spec = acctLook(pn) flatMap { special(_) }
     for {
@@ -133,7 +133,7 @@ object SplitLineBalanceFirst {
 }
 
 object SplitLineBalanceSerial {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup, ec: ExecutionContext): Future[Bal] = {
     acctLook(pn) flatMap { acct =>
       balLook(acct) flatMap { b =>
         special(acct) map {
@@ -145,19 +145,19 @@ object SplitLineBalanceSerial {
 }
 
 object SplitLineBalanceCommon {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup, ec: ExecutionContext): Future[Bal] = {
     val acct = acctLook(pn)
     val std = acct flatMap { balLook(_) }
     val spec = acct flatMap { special(_) }
     for {
-      val b1 <- std
-      val b2 <- spec
+      b1 <- std
+      b2 <- spec
     } yield b1 + b2
   }
 }
 
 object SplitLineBalanceCommonMap {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup, ec: ExecutionContext): Future[Bal] = {
     val acct = acctLook(pn)
     val std = acct flatMap { balLook(_) }
     val spec = acct flatMap { special(_) }
@@ -175,7 +175,7 @@ object SplitLineBalanceList {
 }
 
 object SplitLineBalanceTuple {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[(Num, Acct, Bal, Bal)] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup, ec: ExecutionContext): Future[(Num, Acct, Bal, Bal)] = {
     val acct = acctLook(pn)
     val std = acct flatMap { balLook(_) }
     val spec = acct flatMap { special(_) }
@@ -188,18 +188,18 @@ object SplitLineBalanceTuple {
 }
 
 object SplitLineBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup, ec: ExecutionContext): Future[Bal] = {
     val std = acctLook(pn) flatMap { balLook(_) }
     val spec = acctLook(pn) flatMap { special(_) }
     for {
-      val b1 <- std
-      val b2 <- spec
+      b1 <- std
+      b2 <- spec
     } yield b1 + b2
   }
 }
 
 object SplitLineBalanceTuple2 {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[(Bal, Bal)] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup, ec: ExecutionContext): Future[(Bal, Bal)] = {
     val std = acctLook(pn) flatMap { balLook(_) }
     val spec = acctLook(pn) flatMap { special(_) }
     Flow.tuple(std, spec)
@@ -207,7 +207,7 @@ object SplitLineBalanceTuple2 {
 }
 
 object SplitLineBalanceTuple2Id {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup): Future[(Num, Bal, Bal)] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup, ec: ExecutionContext): Future[(Num, Bal, Bal)] = {
     val std = acctLook(pn) flatMap { balLook(_) }
     val spec = acctLook(pn) flatMap { special(_) }
     Flow.tuple(pn, std, spec)
@@ -215,7 +215,7 @@ object SplitLineBalanceTuple2Id {
 }
 
 object RecoverNumBalance {
-  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal]): Future[Bal] = {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], ec: ExecutionContext): Future[Bal] = {
     acctLook(pn) flatMap { balLook(_) } recover { case _ => Bal(0F) } map { _ + Bal(66F) }
   }
 }
@@ -230,7 +230,7 @@ object IfNumBalance {
 }
 
 object Phones {
-  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]]): Future[List[Num]] = numLook(id)
+  def apply(id: Id)(implicit numLook: Lookup[Id, List[Num]], ec: ExecutionContext): Future[List[Num]] = numLook(id)
 }
 
 object AccountsByFor {

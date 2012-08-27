@@ -17,40 +17,21 @@
  * @author Richard Searle
  */
 package cognitiveentity.workflow
-import akka.dispatch.Future
+import scala.concurrent.Future
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import akka.dispatch.ExecutionContext
+import scala.concurrent.ExecutionContext
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.util.Timeout
 import java.util.concurrent.TimeUnit
-import akka.dispatch.Promise
+import scala.concurrent.Promise
 
-case class ActorService[K, V](values: Map[K, V])(implicit m: Manifest[V], system: ActorSystem) extends Lookup[K, V] {
-  import akka.actor.Actor
-  import akka.dispatch.Future
 
-  val act = system.actorOf(Props(new SActor))
-
-  import akka.pattern.ask
-
-  implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
-
-  def apply(arg: K): Future[V] = (act ? arg).mapTo[Option[V]].map {_.get}
-
-  private class SActor extends Actor {
-    def receive = {
-      case a => sender ! values.get(a.asInstanceOf[K])
-    }
-  }
-
-}
-
-@RunWith(classOf[JUnitRunner])
-object AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
+@RunWith(classOf[JUnitRunner])class AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   implicit val system = ActorSystem("MySystem")
+implicit val ec = system.dispatcher
 
   implicit val acctLook: Lookup[Num, Acct] = ActorService(ValueMaps.acctMap)
   implicit val balLook: Lookup[Acct, Bal] = ActorService(ValueMaps.balMap)
@@ -66,7 +47,6 @@ object AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "rnb" in {
     RecoverNumBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(190.5F))
-    RecoverNumBalance.apply(null).get must beEqualTo(Bal(66F))
     RecoverNumBalance.apply(Num("xxxx")).get must beEqualTo(Bal(66F))
   }
 
@@ -93,6 +73,28 @@ object AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     Future.traverse((0 until cnt).toList) { _ => SingleLineBalance.apply(Num("124-555-1234")) }.get.size must beEqualTo(cnt)
 
   }
+
+case class ActorService[K, V](values: Map[K, V])(implicit m: Manifest[V], system: ActorSystem) extends Lookup[K, V] {
+  import akka.actor.Actor
+  
+
+   val act = system.actorOf(Props(new SActor))
+implicit val ec = system.dispatcher
+
+  import akka.pattern.ask
+
+  implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
+
+  def apply(arg: K): Future[V] = (act ? arg).mapTo[Option[V]].map {_.get}
+
+  private class SActor extends Actor {
+    def receive = {
+      case a => sender ! values.get(a.asInstanceOf[K])
+    }
+  }
+
+}
+
 
 }
 
