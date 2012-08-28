@@ -154,28 +154,24 @@ import Getter._
    val template = camel.template
    implicit val ec = system.dispatcher
 
+  import org.apache.camel.builder._
+
+   private def add[K,V](name:String,map:Map[K,V]){
+      context.addRoutes(new RouteBuilder(){
+         def configure {
+           from("seda:" + name).bean(Responder(map))
+         }
+       })
+   }
+
+    
   step {
-    import org.apache.camel.builder._
-
-    context.addRoutes(new RouteBuilder(){
-         def configure {
-           from("seda:acct").bean(Responder(ValueMaps.acctMap))
-         }
-       })
-
- context.addRoutes(new RouteBuilder(){
-         def configure {
-           from("seda:num").bean(Responder(ValueMaps.numMap))
-         }
-       })
-
- context.addRoutes(new RouteBuilder(){
-         def configure {
-           from("seda:bal").bean(Responder(ValueMaps.balMap))
-         }
-       })
-
-context.addRoutes(new RouteBuilder(){
+    
+   add("acct",ValueMaps.acctMap)
+   add("bal",ValueMaps.balMap)
+   add("num",ValueMaps.numMap)
+  
+   context.addRoutes(new RouteBuilder(){
          def configure {
            from("seda:gather").bean(Gather)
          }
