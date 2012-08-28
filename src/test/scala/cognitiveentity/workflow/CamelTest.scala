@@ -45,16 +45,14 @@ case class Responder[K, V](map: Map[K, V]) {
   def apply(a: Any) = map(a.asInstanceOf[K])
 }
 
-case class CamelService[K, V](name: String)(implicit system:ActorSystem) extends Lookup[K, V] {
+case class CamelService[K, V](aname: String)(implicit system:ActorSystem) extends Lookup[K, V] {
   import akka.actor.Actor
  import akka.pattern.ask
  import system.dispatcher
 
 implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
 
-  val act = system.actorOf(Props[SActor])
-
-
+  val act = system.actorOf(Props(new SActor(aname)),name=aname)
 
   def apply(arg: K): Future[V] = (act ? arg).map {
     _ match {
@@ -62,17 +60,20 @@ implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
     }
   }
 
-  private class SActor extends Actor with Producer {
+}
+
+ private class SActor(name:String) extends Actor with Producer {
     def endpointUri = "seda:" + name
   }
 
+case class RRFlow[A, R](aname: String, flow: A => Future[R])(implicit system:ActorSystem) {
+
+  val act = system.actorOf(Props (new FActor(aname,flow)),name=aname)
+
+ 
 }
 
-case class RRFlow[A, R](name: String, flow: A => Future[R])(implicit system:ActorSystem) {
-
-  val act = system.actorOf(Props[FActor])
-
-  private   class FActor extends  Consumer {
+ private   class FActor[A,R](name:String,flow: A => Future[R]) extends  Consumer {
     def endpointUri = "seda:" + name
     import context._
     def receive = {
@@ -80,25 +81,27 @@ case class RRFlow[A, R](name: String, flow: A => Future[R])(implicit system:Acto
     }
   }
 
-}
 
 case class OWFlow[A, R](in: String, out: String, flow: A => Future[R])(implicit system:ActorSystem) {
 
-  val inActor = system.actorOf(Props[InActor])
-  val outActor = system.actorOf(Props[OutActor])
+  val outActor = system.actorOf(Props(new OutActor(out)))
+  val inActor = system.actorOf(Props(new InActor(in,flow,outActor)))
+  
 
-  private  class OutActor extends Actor with  Producer with Oneway {
+ 
+}
+
+ private  class OutActor(out:String) extends Actor with  Producer with Oneway {
     val endpointUri = "seda:" + out
   }
 
-  private  class InActor extends Consumer {
+  private  class InActor[A,R](in:String,flow: A => Future[R],outActor:ActorRef) extends Consumer {
     val endpointUri = "seda:" + in
     import context._
     def receive = {
       case CamelMessage(a: A, _) => (Future(a).flatMap(flow)).onComplete { outActor ! _ }
     }
   }
-}
 
 /**
  * Mechanism to asynchronously capture the results of a one-way
@@ -119,7 +122,7 @@ private object Gather {
     }
   }
   //wait for expected number of results to be received
-  def await { awaiter.get.await(200, java.util.concurrent.TimeUnit.SECONDS) }
+  def await { awaiter.get.await(2, java.util.concurrent.TimeUnit.SECONDS) }
 
   //record the result
   def apply[A](arg: A) {
@@ -133,7 +136,7 @@ private object Gather {
 }
 
 @RunWith(classOf[JUnitRunner])
-object CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
+class CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
 
 import Getter._
 
@@ -152,26 +155,45 @@ import Getter._
    implicit val ec = system.dispatcher
 
   step {
-   
+    import org.apache.camel.builder._
 
-    import org.apache.camel.scala.dsl.builder.RouteBuilder;
-    //wire end points for services to a single bean
-    context.addRoutes(new RouteBuilder { "seda:num".bean(Responder(ValueMaps.numMap)) })
-    context.addRoutes(new RouteBuilder { "seda:acct".bean(Responder(ValueMaps.acctMap)) })
-    context.addRoutes(new RouteBuilder { "seda:bal".bean(Responder(ValueMaps.balMap)) })
-    //wire end point for result of f-a-f call 
-    context.addRoutes(new RouteBuilder { "seda:gather".bean(Gather) })
+    context.addRoutes(new RouteBuilder(){
+         def configure {
+           from("seda:acct").bean(Responder(ValueMaps.acctMap))
+         }
+       })
+
+ context.addRoutes(new RouteBuilder(){
+         def configure {
+           from("seda:num").bean(Responder(ValueMaps.numMap))
+         }
+       })
+
+ context.addRoutes(new RouteBuilder(){
+         def configure {
+           from("seda:bal").bean(Responder(ValueMaps.balMap))
+         }
+       })
+
+context.addRoutes(new RouteBuilder(){
+         def configure {
+           from("seda:gather").bean(Gather)
+         }
+       })
+
+
     // R-R flows
     val slb = new RRFlow("slb", SingleLineBalance.apply)
     val bbm = new RRFlow("bbm", BalanceByMap.apply)
     //oneway flows
     val slbOW = new OWFlow("slbIn", "gather", SingleLineBalance.apply)
-    val noop = new OWFlow("noop", "gather", NoOp.apply)
+    val noop = new OWFlow("noop", "gather", NoOp.apply) 
+
 
   }
 
   "seda" in {
-    val cnt = 16
+    val cnt = 1
 
     for (i <- 1 to cnt)
       template.requestBody("seda:acct", Num("124-555-1234")) must beEqualTo(Acct("alpha"))
@@ -181,7 +203,7 @@ import Getter._
 
   "Noop" in {
   
-    val cnt = 16
+    val cnt = 1
     Gather.prep(cnt)
     for (i <- 1 to cnt)
       template.sendBody("seda:noop", Num("124-555-1234"))
@@ -192,7 +214,7 @@ import Getter._
 
   "check slb one way using camel many" in {
   
-    val cnt = 62
+    val cnt = 2
     Gather.prep(cnt)
     for (i <- 1 to cnt)
       template.sendBody("seda:slbIn", Num("124-555-1234"))
@@ -201,17 +223,16 @@ import Getter._
     Gather.values.size must beEqualTo(cnt)
 
   }
-
   "check slb request using camel" in {
    
-    val fs = for (i <- 0 to 14) yield (template.requestBody("seda:slb", Num("124-555-1234"))).asInstanceOf[Future[Bal]]
+    val fs = for (i <- 0 to 1) yield (template.requestBody("seda:slb", Num("124-555-1234"))).asInstanceOf[Future[Bal]]
 
     fs.map(f => f.get must beEqualTo(Bal(124.5F)))
   }
 
   "check bbm request using camel" in {
   
-    val fs = for (i <- 0 to 10) yield (template.requestBody("seda:bbm", Id(123))).asInstanceOf[Future[Bal]]
+    val fs = for (i <- 0 to 1) yield (template.requestBody("seda:bbm", Id(123))).asInstanceOf[Future[Bal]]
 
     fs.map(f => f.get must beEqualTo(Bal(125.5F)))
   }
@@ -220,7 +241,7 @@ import Getter._
   
     template.requestBody("seda:bal", Acct("alpha")) must beEqualTo(Bal(124.5F))
     template.requestBody("seda:bal", Acct("beta")) must beEqualTo(Bal(1F))
-  }
+  } 
 
   "placeholder" in {
     success
@@ -230,6 +251,7 @@ import Getter._
    * Shutdown
    */
   step {
+
    system shutdown
   }
 

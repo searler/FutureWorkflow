@@ -7,11 +7,11 @@ scalaVersion := "2.10.0-M7"
 
 //Specs2
 libraryDependencies ++= Seq(
-  "org.apache.camel" % "camel-scala" % "2.10.0",
+  //"org.apache.camel" % "camel-scala" % "2.10.0",
  "org.specs2" % "specs2_2.10.0-M7" % "1.12.1.1",
  //  "org.specs2" %% "specs2" % "2.10",
  //  "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test",
-  //  "org.slf4j" % "slf4j-log4j12" % "1.6.3" % "test" ,
+   "org.slf4j" % "slf4j-log4j12" % "1.6.3" % "test" ,
    "junit" % "junit" % "4.7"
    )
 
