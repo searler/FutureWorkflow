@@ -22,7 +22,7 @@ package cognitiveentity.workflow
 import org.specs2.mutable._
 import scala.concurrent._
 
-import scala.concurrent.util.Duration
+import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
 
 import org.junit.runner.RunWith

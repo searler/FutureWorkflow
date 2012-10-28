@@ -2,7 +2,7 @@ package cognitiveentity.workflow
 import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
-import scala.concurrent.util.Duration
+import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
 import scala.util.Either
 
