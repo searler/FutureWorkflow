@@ -16,9 +16,10 @@ resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/s
                     "releases"  at "http://oss.sonatype.org/content/repositories/releases")
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+
  
-libraryDependencies ++= Seq("com.typesafe.akka" % "akka-actor_2.10.0-RC1"  % "2.1.0-RC1",
-                            "com.typesafe.akka" % "akka-camel_2.10.0-RC1" % "2.1.0-RC1" 
+libraryDependencies ++= Seq("com.typesafe.akka" %% "akka-actor" % "2.1.0-RC1" cross CrossVersion.full,
+                            "com.typesafe.akka" %% "akka-camel" % "2.1.0-RC1" cross CrossVersion.full 
                            )
 
  //parallelExecution in Test := false
