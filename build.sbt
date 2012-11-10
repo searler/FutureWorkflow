@@ -2,7 +2,7 @@ name := "Akka Actor Workflow"
 
 version := "0.4"
 
-scalaVersion := "2.10.0-RC1"
+scalaVersion := "2.10.0-RC2"
 
 
 //Specs2
@@ -18,8 +18,8 @@ resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/s
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
  
-libraryDependencies ++= Seq("com.typesafe.akka" %% "akka-actor" % "2.1.0-RC1" cross CrossVersion.full,
-                            "com.typesafe.akka" %% "akka-camel" % "2.1.0-RC1" cross CrossVersion.full 
+libraryDependencies ++= Seq("com.typesafe.akka" %% "akka-actor" % "2.1.0-RC2" cross CrossVersion.full,
+                            "com.typesafe.akka" %% "akka-camel" % "2.1.0-RC2" cross CrossVersion.full 
                            )
 
  //parallelExecution in Test := false
