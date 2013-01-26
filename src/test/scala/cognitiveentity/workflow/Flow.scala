@@ -48,6 +48,6 @@ object Flow {
  * Optimized return of a known value
  */
 object Ret {
-  def apply[T](v: T)(implicit ec: ExecutionContext): Future[T] = Future.successful(v)
+  def apply[T](v: T): Future[T] = Future.successful(v)
 }  
 
