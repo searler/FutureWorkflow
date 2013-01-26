@@ -6,12 +6,9 @@ import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
 import scala.util.Either
 
-case object Getter {
+object Getter {
 
-  implicit def addGet[T](future: Future[T]) = Getter(future)
-}
-
-case class Getter[T](future: Future[T]) {
+implicit  class GetterImpl[T](future: Future[T]) {
   import scala.reflect.ClassTag
   private val duration = Duration(100, TimeUnit.MILLISECONDS)
   def get: T = Await.result(future, duration)
@@ -20,4 +17,6 @@ case class Getter[T](future: Future[T]) {
     duration)
   def asEither(implicit ec: ExecutionContext,tag: ClassTag[T]): Either[Throwable, T] = Await.result(future.mapTo[T].map { case v: T => Right(v) }.recover { case _@ e => Left(e) },
     duration)
+}
+
 }
