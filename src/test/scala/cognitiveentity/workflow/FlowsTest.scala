@@ -180,8 +180,13 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     AccountsByTraverse(Id(123)).get must beEqualTo(List(Acct("alpha"), Acct("beta")))
   }
 
-  private abstract class MapService[K, V](map: Map[K, V])(implicit ec: ExecutionContext) {
-    def apply(a: K) = Future(map(a))
+  private abstract class MapService[K, V](map: Map[K, V]){
+    def apply(a: K) =   try {
+                           Future.successful(map(a))
+                        }
+                        catch {
+                          case e :Throwable => Future.failed(e)
+                        }
   }
 
   private case class Service[K, V](values: Map[K, V]) extends MapService(values) with Lookup[K, V]
