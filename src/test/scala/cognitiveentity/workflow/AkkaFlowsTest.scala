@@ -42,7 +42,7 @@ import scala.concurrent.Promise
   "slb" in {
     SingleLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
     SingleLineBalance.apply(Num("124-555-1234")).option must beEqualTo(Some(Bal(124.5F)))
-    SingleLineBalance.apply(Num("xxx")).exception must beEqualTo("None.get") // TODO
+    SingleLineBalance.apply(Num("xxx")).exception must beEqualTo("key not found: Num(xxx)") 
     SingleLineBalance.apply(Num("xxx")).option must beEqualTo(None)
   }
 
@@ -86,7 +86,10 @@ case class ActorService[K, V](values: Map[K, V])(implicit m: Manifest[V], system
 
   implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
 
-  def apply(arg: K): Future[V] = (act ? arg).mapTo[Option[V]].map {_.get}
+  def apply(arg: K): Future[V] = (act ? arg).mapTo[Option[V]].collect {
+        case Some(v) => v
+        case None    => throw new NoSuchElementException("key not found: "+arg)
+    }
 
   private class SActor extends Actor {
     def receive = {
