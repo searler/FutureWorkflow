@@ -42,7 +42,8 @@ import scala.concurrent.Promise
   "slb" in {
     SingleLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
     SingleLineBalance.apply(Num("124-555-1234")).option must beEqualTo(Some(Bal(124.5F)))
-
+    SingleLineBalance.apply(Num("xxx")).exception must beEqualTo("None.get") // TODO
+    SingleLineBalance.apply(Num("xxx")).option must beEqualTo(None)
   }
 
   "rnb" in {
