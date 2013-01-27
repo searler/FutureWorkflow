@@ -189,23 +189,15 @@ import Getter._
   }
 
   "seda" in {
-    val cnt = 1
-
-    for (i <- 1 to cnt)
       template.requestBody("seda:acct", Num("124-555-1234")) must beEqualTo(Acct("alpha"))
-
-    success
   }
 
   "Noop" in {
-  
-    val cnt = 1
-    Gather.prep(cnt)
-    for (i <- 1 to cnt)
-      template.sendBody("seda:noop", Num("124-555-1234"))
+    Gather.prep(1)
+    template.sendBody("seda:noop", Num("124-555-1234"))
 
     Gather.await
-    Gather.values.size must beEqualTo(cnt)
+    Gather.values.size must beEqualTo(1)
   }
 
   "check slb one way using camel many" in {
