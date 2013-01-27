@@ -27,8 +27,7 @@ import akka.util.Timeout
 import java.util.concurrent.TimeUnit
 import scala.concurrent.Promise
 
-
-@RunWith(classOf[JUnitRunner])class AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
+@RunWith(classOf[JUnitRunner]) class AkkaFlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   implicit val system = ActorSystem("MySystem")
   implicit val ec = system.dispatcher
@@ -42,7 +41,7 @@ import scala.concurrent.Promise
   "slb" in {
     SingleLineBalance.apply(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
     SingleLineBalance.apply(Num("124-555-1234")).option must beEqualTo(Some(Bal(124.5F)))
-    SingleLineBalance.apply(Num("xxx")).exception must beEqualTo("key not found: Num(xxx)") 
+    SingleLineBalance.apply(Num("xxx")).exception must beEqualTo("key not found: Num(xxx)")
     SingleLineBalance.apply(Num("xxx")).option must beEqualTo(None)
   }
 
@@ -75,30 +74,29 @@ import scala.concurrent.Promise
 
   }
 
-case class ActorService[K, V](values: Map[K, V])(implicit m: Manifest[V], system: ActorSystem) extends Lookup[K, V] {
-  import akka.actor.Actor
-  
+  case class ActorService[K, V](values: Map[K, V])(implicit m: Manifest[V], system: ActorSystem) extends Lookup[K, V] {
+    import akka.actor.Actor
 
-   val act = system.actorOf(Props(new SActor))
-   implicit val ec = system.dispatcher
+    val act = system.actorOf(Props(new SActor))
+    implicit val ec = system.dispatcher
 
-  import akka.pattern.ask
+    import akka.pattern.ask
 
-  implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
+    implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
 
-  def apply(arg: K): Future[V] = (act ? arg).mapTo[Option[V]].collect {
-        case Some(v) => v
-        case None    => throw new NoSuchElementException("key not found: "+arg)
+    //mapTo only needed because Map can contain null
+    def apply(arg: K): Future[V] = (act ? arg).mapTo[Option[V]].collect {
+      case Some(v) => v
+      case None => throw new NoSuchElementException("key not found: " + arg)
     }
 
-  private class SActor extends Actor {
-    def receive = {
-      case a => sender ! values.get(a.asInstanceOf[K])
+    private class SActor extends Actor {
+      def receive = {
+        case a => sender ! values.get(a.asInstanceOf[K])
+      }
     }
+
   }
-
-}
-
 
 }
 

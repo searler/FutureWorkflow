@@ -54,12 +54,9 @@ implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
 
   val act = system.actorOf(Props(new SActor(aname)),name=aname)
 
-  def apply(arg: K): Future[V] = (act ? arg).map {
-    _ match {
+  def apply(arg: K): Future[V] = (act ? arg).collect {
       case CamelMessage(a: V, _) => a
     }
-  }
-
 }
 
  private class SActor(name:String) extends Actor with Producer {
@@ -67,10 +64,7 @@ implicit val timeout = Timeout(100, TimeUnit.MILLISECONDS)
   }
 
 case class RRFlow[A, R](aname: String, flow: A => Future[R])(implicit system:ActorSystem) {
-
   val act = system.actorOf(Props (new FActor(aname,flow)),name=aname)
-
- 
 }
 
  private   class FActor[A,R](name:String,flow: A => Future[R]) extends  Consumer {
@@ -83,12 +77,8 @@ case class RRFlow[A, R](aname: String, flow: A => Future[R])(implicit system:Act
 
 
 case class OWFlow[A, R](in: String, out: String, flow: A => Future[R])(implicit system:ActorSystem) {
-
   val outActor = system.actorOf(Props(new OutActor(out)))
   val inActor = system.actorOf(Props(new InActor(in,flow,outActor)))
-  
-
- 
 }
 
  private  class OutActor(out:String) extends Actor with  Producer with Oneway {
@@ -181,6 +171,7 @@ import Getter._
     // R-R flows
     val slb = new RRFlow("slb", SingleLineBalance.apply)
     val bbm = new RRFlow("bbm", BalanceByMap.apply)
+   
     //oneway flows
     val slbOW = new OWFlow("slbIn", "gather", SingleLineBalance.apply)
     val noop = new OWFlow("noop", "gather", NoOp.apply) 
@@ -213,16 +204,16 @@ import Getter._
   }
   "check slb request using camel" in {
    
-    val fs = for (i <- 0 to 1) yield (template.requestBody("seda:slb", Num("124-555-1234"))).asInstanceOf[Future[Bal]]
+    val fs = (template.requestBody("seda:slb", Num("124-555-1234"))).asInstanceOf[Future[Bal]]
 
-    fs.map(f => f.get must beEqualTo(Bal(124.5F)))
+    fs.get must beEqualTo(Bal(124.5F))
   }
 
   "check bbm request using camel" in {
   
-    val fs = for (i <- 0 to 1) yield (template.requestBody("seda:bbm", Id(123))).asInstanceOf[Future[Bal]]
+    val fs = (template.requestBody("seda:bbm", Id(123))).asInstanceOf[Future[Bal]]
 
-    fs.map(f => f.get must beEqualTo(Bal(125.5F)))
+    fs.get must beEqualTo(Bal(125.5F))
   }
 
   "check responder request using camel" in {
