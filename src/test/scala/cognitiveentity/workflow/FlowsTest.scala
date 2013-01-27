@@ -181,12 +181,8 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   }
 
   private abstract class MapService[K, V](map: Map[K, V]){
-    def apply(a: K) =   try {
-                           Future.successful(map(a))
-                        }
-                        catch {
-                          case e :Throwable => Future.failed(e)
-                        }
+    import ExecutionContext.Implicits.global
+    def apply(a: K) = future {map(a)} 
   }
 
   private case class Service[K, V](values: Map[K, V]) extends MapService(values) with Lookup[K, V]
