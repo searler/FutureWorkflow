@@ -73,8 +73,8 @@ case class RRFlow[A, R](aname: String, flow: A => Future[R])(implicit system:Act
     import akka.pattern.pipe 
     def receive = {
       case CamelMessage(a: A, _) => {
-        val s = sender
-        (Future(a).flatMap(flow)) pipeTo s
+        val capture = sender
+        (Future(a).flatMap(flow)) pipeTo capture
       }
     }
   }
@@ -92,8 +92,9 @@ case class OWFlow[A, R](in: String, out: String, flow: A => Future[R])(implicit 
   private  class InActor[A,R](in:String,flow: A => Future[R],outActor:ActorRef) extends Consumer {
     val endpointUri = "seda:" + in
     import context._
+    import akka.pattern.pipe 
     def receive = {
-      case CamelMessage(a: A, _) => (Future(a).flatMap(flow)).onComplete { outActor ! _ }
+      case CamelMessage(a: A, _) => (Future(a).flatMap(flow)) pipeTo  outActor 
     }
   }
 
