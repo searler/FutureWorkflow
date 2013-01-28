@@ -191,7 +191,7 @@ class CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
     template.sendBody("seda:noop", Num("124-555-1234"))
 
     Gather.await
-    Gather.values.size must beEqualTo(1)
+    Gather.values must beEqualTo(List(Num("124-555-1234")))
   }
 
   "check slb one way using camel many" in {
@@ -202,7 +202,7 @@ class CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
       template.sendBody("seda:slbIn", Num("124-555-1234"))
 
     Gather.await
-    Gather.values.size must beEqualTo(cnt)
+    Gather.values must beEqualTo(List(Bal(124.5F), Bal(124.5F)))
 
   }
   "check slb request using camel" in {
