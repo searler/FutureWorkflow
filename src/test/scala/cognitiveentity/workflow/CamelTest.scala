@@ -70,8 +70,12 @@ case class RRFlow[A, R](aname: String, flow: A => Future[R])(implicit system:Act
  private   class FActor[A,R](name:String,flow: A => Future[R]) extends  Consumer {
     def endpointUri = "seda:" + name
     import context._
+    import akka.pattern.pipe 
     def receive = {
-      case CamelMessage(a: A, _) => sender ! (Future(a).flatMap(flow))
+      case CamelMessage(a: A, _) => {
+        val s = sender
+        (Future(a).flatMap(flow)) pipeTo s
+      }
     }
   }
 
@@ -204,16 +208,16 @@ import Getter._
   }
   "check slb request using camel" in {
    
-    val fs = (template.requestBody("seda:slb", Num("124-555-1234"))).asInstanceOf[Future[Bal]]
+    val fs = (template.requestBody("seda:slb", Num("124-555-1234"))).asInstanceOf[Bal]
 
-    fs.get must beEqualTo(Bal(124.5F))
+    fs must beEqualTo(Bal(124.5F))
   }
 
   "check bbm request using camel" in {
   
-    val fs = (template.requestBody("seda:bbm", Id(123))).asInstanceOf[Future[Bal]]
+    val fs = (template.requestBody("seda:bbm", Id(123))).asInstanceOf[Bal]
 
-    fs.get must beEqualTo(Bal(125.5F))
+    fs must beEqualTo(Bal(125.5F))
   }
 
   "check responder request using camel" in {
