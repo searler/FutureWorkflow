@@ -58,10 +58,10 @@ case class CamelService[K, V](aname: String)(implicit m: Manifest[V], system: Ac
   def apply(arg: K): Future[V] = (act ? arg).collect {
     case CamelMessage(a: V, _) => a
   }
-}
 
-private class SActor(name: String) extends Actor with Producer {
-  def endpointUri = "seda:" + name
+  private class SActor(name: String) extends Actor with Producer {
+    def endpointUri = "seda:" + name
+  }
 }
 
 case class RRFlow[A, R](aname: String, flow: A => Future[R])(implicit m: Manifest[A], system: ActorSystem) {
@@ -77,7 +77,7 @@ private class FActor[A, R](name: String, flow: A => Future[R])(implicit m: Manif
       val capture = sender
       (Future(a).flatMap(flow)) pipeTo capture
     }
-    case CamelMessage(_ @ a, _) => sender ! akka.actor.Status.Failure(new IllegalArgumentException(a.toString))
+    case CamelMessage(_@ a, _) => sender ! akka.actor.Status.Failure(new IllegalArgumentException(a.toString))
   }
 }
 
@@ -96,7 +96,7 @@ private class InActor[A, R](in: String, flow: A => Future[R], outActor: ActorRef
   import akka.pattern.pipe
   def receive = {
     case CamelMessage(a: A, _) => (Future(a).flatMap(flow)) pipeTo outActor
-    case CamelMessage(_ @ a, _) => sender ! akka.actor.Status.Failure(new IllegalArgumentException(a.toString))
+    case CamelMessage(_@ a, _) => sender ! akka.actor.Status.Failure(new IllegalArgumentException(a.toString))
   }
 }
 
@@ -173,12 +173,12 @@ class CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
     })
 
     // R-R flows
-    val slb = new RRFlow("slb", SingleLineBalance.apply)
-    val bbm = new RRFlow("bbm", BalanceByMap.apply)
+    val slb = RRFlow("slb", SingleLineBalance.apply)
+    val bbm = RRFlow("bbm", BalanceByMap.apply)
 
     //oneway flows
-    val slbOW = new OWFlow("slbIn", "gather", SingleLineBalance.apply)
-    val noop = new OWFlow("noop", "gather", NoOp.apply)
+    val slbOW = OWFlow("slbIn", "gather", SingleLineBalance.apply)
+    val noop = OWFlow("noop", "gather", NoOp.apply)
 
   }
 
@@ -211,18 +211,15 @@ class CamelTest extends org.specs2.mutable.SpecificationWithJUnit {
 
     fs must beEqualTo(Bal(124.5F))
   }
-  
+
   "wrong type" in {
 
-     (template.requestBody("seda:bbm", Num("124-555-1234"))) must throwA[CamelExecutionException]
+    (template.requestBody("seda:bbm", Num("124-555-1234"))) must throwA[CamelExecutionException]
 
   }
 
   "check bbm request using camel" in {
-
-    val fs = (template.requestBody("seda:bbm", Id(123))).asInstanceOf[Bal]
-
-    fs must beEqualTo(Bal(125.5F))
+    (template.requestBody("seda:bbm", Id(123))) must beEqualTo(Bal(125.5F))
   }
 
   "check responder request using camel" in {
