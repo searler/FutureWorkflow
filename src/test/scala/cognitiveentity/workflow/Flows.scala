@@ -71,8 +71,8 @@ object DiscountByPhone {
 object SpecialCaseBalance {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal],ec:ExecutionContext): Future[Bal] =
     pn match {
-      case Num("911") => Future(Bal(0F))
-      case Num("555-555-5555") => Future(Bal(1000000F))
+      case Num("911") => Future.successful(Bal(0F))
+      case Num("555-555-5555") => Future.successful(Bal(1000000F))
       case _ => acctLook(pn) flatMap { balLook }
     }
 }
@@ -120,7 +120,7 @@ object SplitLineBalanceFiltered {
     for {
       b1 <- std if b1 == Bal(124.5F)
       b2 <- spec
-    } yield b2 + b1.asInstanceOf[Bal] //need cast due to Any type on filter. Fixed in 2.0
+    } yield b2 + b1
   }
 }
 
@@ -223,7 +223,7 @@ object RecoverNumBalance {
 object IfNumBalance {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal],ec:ExecutionContext): Future[Bal] = {
     if (pn == null)
-      Ret(Bal(0F))
+      Future.successful(Bal(0F))
     else
       acctLook(pn) flatMap { a => if (a == null) Ret(Bal(55F)) else balLook(a) }
   }
