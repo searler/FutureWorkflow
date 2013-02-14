@@ -52,6 +52,12 @@ object Balance {
   def apply(acct: Acct)(implicit balLook: Lookup[Acct, Bal]): Future[Bal] = balLook(acct)
 }
 
+object BalanceByNum {
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct],balLook: Lookup[Acct, Bal], ec: ExecutionContext): Future[Bal] = { 
+    acctLook(pn) flatMap {balLook}
+}
+}
+
 object Discount {
   def apply(acct: Acct)(implicit balLook: Lookup[Acct, Bal], specialLook: Lookup[Acct, Boolean], ec: ExecutionContext): Future[Bal] = {
     val balance = balLook(acct)

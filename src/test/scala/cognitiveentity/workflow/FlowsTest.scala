@@ -52,6 +52,10 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
   "balance" in {
     Balance(Acct("alpha")).get must beEqualTo(Bal(124.5F))
   }
+  
+  "balance by num" in {
+    BalanceByNum(Num("124-555-1234")).get must beEqualTo(Bal(124.5F))
+  }
 
   "discount" in {
     Discount(Acct("alpha")).get must beEqualTo(Bal(124.5F * 0.9F))
