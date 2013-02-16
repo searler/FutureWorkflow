@@ -73,10 +73,8 @@ private class FActor[A, R](name: String, flow: A => Future[R])(implicit m: Manif
   import context._
   import akka.pattern.pipe
   def receive = {
-    case CamelMessage(a: A, _) => {
-      val capture = sender
-      (Future(a).flatMap(flow)) pipeTo capture
-    }
+    case CamelMessage(a: A, _) => 
+      (Future(a).flatMap(flow)) pipeTo sender
     case CamelMessage(_@ a, _) => sender ! akka.actor.Status.Failure(new IllegalArgumentException(a.toString))
   }
 }
