@@ -92,22 +92,8 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
     ma { _ * 2 } must beEqualTo(246)
 
     val mb: Monitor[Float] = 123F
-
-    def fun(y: Any) = (y match {
-      case Monitor(x:Any) => x
-      case _ => null
-    })
-
-    fun(ma) must beEqualTo(123)
-
-    def disc(y: Any) = (y match {
-      case Monitor(x: Int) => "a"
-      case Monitor(y: Float) => "b"
-      case _ => null
-    })
-
-    disc(ma) must beEqualTo("a")
-    disc(mb) must beEqualTo("b")
+    
+    
 
     def fn(v: Monitor[Int]) = "int"
     def gn(v: Monitor[Float]) = "float"

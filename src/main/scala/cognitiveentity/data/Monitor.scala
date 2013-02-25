@@ -1,15 +1,15 @@
 package cognitiveentity.data
 
-case class Monitor[T](private val v: T) {
+ class Monitor[T](private val v: T) {
   def apply[R](f: T => R): R = synchronized { f(v) }
-  def convert[R](f: T => R): Monitor[R] = Monitor(synchronized { f(v) })
-  def depend[R](f: T => R): DependMonitor[R, T] = DependMonitor(synchronized { f(v) }, this)
+  def convert[R](f: T => R): Monitor[R] = new Monitor(synchronized { f(v) })
+  def depend[R](f: T => R): DependMonitor[R, T] = new DependMonitor(synchronized { f(v) }, this)
 }
 
-case class DependMonitor[T, L](private val v: T, private val lock: Monitor[L]) {
+class DependMonitor[T, L](private val v: T, private val lock: Monitor[L]) {
   def apply[R](f: T => R): R = lock.synchronized{ f(v) }
-  def convert[R](f: T => R): Monitor[R] = lock.synchronized{Monitor(synchronized { f(v) })}
-  def depend[R](f: T => R): DependMonitor[R, L] = lock.synchronized{ DependMonitor(f(v), lock) }
+  def convert[R](f: T => R): Monitor[R] = lock.synchronized{new Monitor(synchronized { f(v) })}
+  def depend[R](f: T => R): DependMonitor[R, L] = lock.synchronized{new DependMonitor(f(v), lock) }
 }
 
 object Monitor {
