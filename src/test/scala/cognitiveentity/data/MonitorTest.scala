@@ -13,6 +13,8 @@ import org.specs2.execute.Result
 @RunWith(classOf[JUnitRunner])
 object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
   def ident[T](v: T) = v
+  
+  import Monitor._
 
   "int" in {
     implicit def stringToInt(s: String) = Integer.parseInt(s)
@@ -33,7 +35,7 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "convert" in {
     val mint: Monitor[Int] = 123
-    val mfloat: Monitor[Float] = mint.convert { _ * 2F }
+    val mfloat = mint.convert { _ * 2F }
     mfloat { ident } must beEqualTo(246F)
   }
 
@@ -53,9 +55,9 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
   "depend" in {
     val mint: Monitor[Int] = 123
 
-    val mdep = mint.depend { _ * 2F }
+    val mdep = mint.convert { _ * 2F }
     mdep { ident } must beEqualTo(246F)
-    val depdep = mdep.depend { _.toString }
+    val depdep = mdep.convert { _.toString }
     depdep { ident } must beEqualTo("246.0")
 
   }
