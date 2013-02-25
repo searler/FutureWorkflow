@@ -86,84 +86,45 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
     result
   }
 
-  "trait" in {
-    sealed trait MA
-    sealed trait MB
+  "typed" in {
 
-    val ma: TaggedMonitor[MA, Int] = 123
+    val ma: Monitor[Int] = 123
     ma { _ * 2 } must beEqualTo(246)
 
-    val mb: TaggedMonitor[MB, Int] = 123
+    val mb: Monitor[Float] = 123F
 
-    // val mbfail :TaggedMonitor[MB,Int] = ma
-    
-    def fun(y:Any) = (y match {
-      case x: TaggedMonitor[MA, Int] => x
+    def fun(y: Any) = (y match {
+      case Monitor(x:Any) => x
       case _ => null
     })
-   
 
-    fun(ma) must beEqualTo(ma)
-    
-     def disc(y:Any) = (y match {
-      case x: TaggedMonitor[MA, Int] => "a"
-      case x: TaggedMonitor[MB, Int] => "b"
+    fun(ma) must beEqualTo(123)
+
+    def disc(y: Any) = (y match {
+      case Monitor(x: Int) => "a"
+      case Monitor(y: Float) => "b"
       case _ => null
     })
-    
+
     disc(ma) must beEqualTo("a")
-  //  disc(mb) must beEqualTo("b")
+    disc(mb) must beEqualTo("b")
 
-    def fn(v: TaggedMonitor[MB, Int]) = "b"
-    def gn(v: TaggedMonitor[MA, Int]) = "a"
+    def fn(v: Monitor[Int]) = "int"
+    def gn(v: Monitor[Float]) = "float"
 
-    //   fn(ma) must beEqualTo("a")
-    fn(mb) must beEqualTo("b")
+    fn(ma) must beEqualTo("int")
+    gn(mb) must beEqualTo("float")
 
   }
-  
+
   "dom trait" in {
     def content(d: Document) = d.getDocumentElement.getTextContent
     implicit def toDom(s: String): Document = (DocumentBuilderFactory.newInstance().newDocumentBuilder()).parse(new InputSource(new StringReader(s)))
-    
-    sealed trait MA
-    
-     val mdoc: TaggedMonitor[MA, Document] = "<xml><key>value</key></xml>"
+
+    val mdoc: Monitor[Document] = "<xml><key>value</key></xml>"
     mdoc { content } must beEqualTo("value")
     val mstring = mdoc.convert(content)
     mstring { ident } must beEqualTo("value")
-  }
-
-  "case class" in {
-    implicit def toString[T](v: T): String = v.toString
-
-    case class A(s: Int) extends BaseMonitor[String, Int]
-
-    val a = A(12)
-    a.s must beEqualTo(12)
-    a { _ * 2 } must beEqualTo("1212")
-    // a.v inaccessible
-    type XML = BaseMonitor[org.w3c.dom.Document, String]
-    implicit def toDom(s: String): Document = (DocumentBuilderFactory.newInstance().newDocumentBuilder()).parse(new InputSource(new StringReader(s)))
-
-    case class XA(s: String) extends XML
-
-    val mdoc = XA("<xml><key>value</key></xml>")
-    mdoc { _.getDocumentElement.getTextContent } must beEqualTo("value")
-  }
-
-  "type" in {
-    sealed trait MA
-    sealed trait MB
-
-    case class H[M, T](v: T)
-
-    var v1 = H[MA, Int](12)
-    var v2 = H[MB, Int](12)
-
-   //   v1 = v2
-
-    success
   }
 
 }
