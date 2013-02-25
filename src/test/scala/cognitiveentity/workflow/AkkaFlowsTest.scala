@@ -74,7 +74,7 @@ import scala.concurrent.Promise
 
   }
 
-  case class ActorService[K, V](values: Map[K, V])(implicit m: Manifest[V], system: ActorSystem) extends Lookup[K, V] {
+  case class ActorService[K, V](values: Map[K, V])(implicit  system: ActorSystem) extends Lookup[K, V] {
     import akka.actor.Actor
 
     val act = system.actorOf(Props(new SActor))
