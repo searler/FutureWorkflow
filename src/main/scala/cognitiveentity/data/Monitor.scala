@@ -6,7 +6,7 @@ private case class Lock
 
 class Monitor[T] private (private val v: T, private val lock: Lock) {
   def apply[R: Immutable](f: T => R): R = lock.synchronized { f(v) }
-  def map[R](f: T => R) = new Monitor(synchronized { f(v) }, lock)
+  def map[R](f: T => R) = new Monitor(lock.synchronized { f(v) }, lock)
 }
 
 object Monitor {
