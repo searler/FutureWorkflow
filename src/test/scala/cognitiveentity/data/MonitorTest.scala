@@ -13,8 +13,18 @@ import org.specs2.execute.Result
 @RunWith(classOf[JUnitRunner])
 object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
   def ident[T](v: T) = v
-  
+
   import Monitor._
+
+  "for" in {
+
+    val mon: Monitor[Int] = 123
+
+    val r = for (m <- mon)
+      yield m * 2
+
+    r(ident) must beEqualTo(246)
+  }
 
   "int" in {
     implicit def stringToInt(s: String) = Integer.parseInt(s)
@@ -35,7 +45,7 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "convert" in {
     val mint: Monitor[Int] = 123
-    val mfloat = mint.convert { _ * 2F }
+    val mfloat = mint.map { _ * 2F }
     mfloat { ident } must beEqualTo(246F)
   }
 
@@ -55,9 +65,9 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
   "depend" in {
     val mint: Monitor[Int] = 123
 
-    val mdep = mint.convert { _ * 2F }
+    val mdep = mint.map { _ * 2F }
     mdep { ident } must beEqualTo(246F)
-    val depdep = mdep.convert { _.toString }
+    val depdep = mdep.map { _.toString }
     depdep { ident } must beEqualTo("246.0")
 
   }
@@ -74,7 +84,7 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
     implicit def toDom(s: String): Document = (DocumentBuilderFactory.newInstance().newDocumentBuilder()).parse(new InputSource(new StringReader(s)))
     val mdoc: Monitor[Document] = "<xml><key>value</key></xml>"
     mdoc { content } must beEqualTo("value")
-    val mstring = mdoc.convert(content)
+    val mstring = mdoc.map(content)
     mstring { ident } must beEqualTo("value")
   }
 
@@ -94,8 +104,6 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
     ma { _ * 2 } must beEqualTo(246)
 
     val mb: Monitor[Float] = 123F
-    
-    
 
     def fn(v: Monitor[Int]) = "int"
     def gn(v: Monitor[Float]) = "float"
@@ -111,7 +119,7 @@ object MonitorTest extends org.specs2.mutable.SpecificationWithJUnit {
 
     val mdoc: Monitor[Document] = "<xml><key>value</key></xml>"
     mdoc { content } must beEqualTo("value")
-    val mstring = mdoc.convert(content)
+    val mstring = mdoc.map(content)
     mstring { ident } must beEqualTo("value")
   }
 

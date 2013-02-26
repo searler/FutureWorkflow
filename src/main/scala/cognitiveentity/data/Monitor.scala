@@ -2,18 +2,15 @@ package cognitiveentity.data
 
 trait Immutable[T]
 
-class Monitor[T](private val v: T) {
-  def apply[R: Immutable](f: T => R): R = synchronized { f(v) }
-  def convert[R](f: T => R) = new DependMonitor(synchronized { f(v) }, this)
-}
+private case class Lock
 
-class DependMonitor[T, L](private val v: T, private val lock: Monitor[L]) {
+class Monitor[T] private (private val v: T, private val lock: Lock) {
   def apply[R: Immutable](f: T => R): R = lock.synchronized { f(v) }
-  def convert[R](f: T => R) = lock.synchronized { new DependMonitor(f(v), lock) }
+  def map[R](f: T => R) = new Monitor(synchronized { f(v) }, lock)
 }
 
 object Monitor {
-  implicit def create[S, T](s: S)(implicit p: S => T) = new Monitor(p(s))
+  implicit def create[S, T](s: S)(implicit p: S => T) = new Monitor(p(s), Lock())
 
   implicit object IntImmutable extends Immutable[Int]
   implicit object FloatImmutable extends Immutable[Float]
