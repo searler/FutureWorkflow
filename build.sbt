@@ -7,7 +7,7 @@ scalaVersion := "2.10.2"
 
 //Specs2
 libraryDependencies ++= Seq(
- "org.specs2" %% "specs2" % "1.13" % "test",
+ "org.specs2" %% "specs2" % "2.1.1" % "test",
    "org.slf4j" % "slf4j-log4j12" % "1.6.3" % "test" ,
    "junit" % "junit" % "4.7"
    )
