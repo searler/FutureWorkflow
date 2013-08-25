@@ -83,6 +83,11 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
     NoOp(Num("124-555-1234")).get must beEqualTo(Num("124-555-1234"))
   }
 
+  "noop implicit" in {
+    NoOpImplicit(Num("124-555-1234")).get must beEqualTo(Num("124-555-1234"))
+  }
+  
+  
   "noop optimized" in {
     NoOpOptimized(Num("124-555-1234")).get must beEqualTo(Num("124-555-1234"))
   }
@@ -111,6 +116,10 @@ object FlowsTest extends org.specs2.mutable.SpecificationWithJUnit {
 
   "split list" in {
     SplitLineBalanceList(Num("124-555-1234")).get must beEqualTo(List(Bal(124.5F), Bal(1000.0F)))
+  }
+  
+  "split list implicit" in {
+    SplitLineBalanceListImplicit(Num("124-555-1234")).get must beEqualTo(List(Bal(124.5F), Bal(1000.0F)))
   }
 
   "split tuple" in {

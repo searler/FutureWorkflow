@@ -49,5 +49,11 @@ object Flow {
  */
 object Ret {
   def apply[T](v: T): Future[T] = Future.successful(v)
-}  
+}
+
+object Implicits {
+  implicit def toFuture[T](v: T) = Future.successful(v)
+  implicit def fromList[A](v:List[Future[A]])(implicit ec:ExecutionContext) = Future.sequence(v)
+
+}
 

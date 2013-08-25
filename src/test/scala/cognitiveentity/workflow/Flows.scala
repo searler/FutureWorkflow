@@ -30,6 +30,8 @@
 package cognitiveentity.workflow
 import scala.concurrent._
 
+import Implicits._
+
 
 trait SpecialBalLookup extends Function1[Acct, Future[Bal]]
 trait BalLookup extends Function1[Acct, Future[Bal]]
@@ -46,6 +48,13 @@ object NoOp {
  */
 object NoOpOptimized {
   def apply(pn: Num)(implicit ec: ExecutionContext) = Ret(pn)
+}
+
+/**
+ * A no-op flow that simply returns the  Num, using implicit
+ */
+object NoOpImplicit {
+  def apply(pn: Num)(implicit ec: ExecutionContext):Future[Num] =  pn
 }
 
 object Balance {
@@ -172,6 +181,16 @@ object SplitLineBalanceCommonMap {
 }
 
 object SplitLineBalanceList {
+  import Implicits._
+  def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup,ec:ExecutionContext): Future[List[Bal]] = {
+    val acct = acctLook(pn)
+    val std = acct flatMap { balLook(_) }
+    val spec = acct flatMap { special(_) }
+    List(std, spec)
+  }
+}
+
+object SplitLineBalanceListImplicit {
   def apply(pn: Num)(implicit acctLook: Lookup[Num, Acct], balLook: Lookup[Acct, Bal], special: SpecialBalLookup,ec:ExecutionContext): Future[List[Bal]] = {
     val acct = acctLook(pn)
     val std = acct flatMap { balLook(_) }
