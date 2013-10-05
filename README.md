@@ -33,4 +33,3 @@ Exercises the Flow instances using simple Akka actors.
 ## CamelTest.scala
 Exercises the Flow instances using Camel to provide a context that is closer to a real world implementation.
 
-
